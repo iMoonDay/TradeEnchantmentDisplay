@@ -1,4 +1,6 @@
 {
+  "modmenu.descriptionTranslation.tradeenchantmentdisplay": "自动显示交易物品的附魔名称",
+  "modmenu.nameTranslation.tradeenchantmentdisplay": "交易附魔显示",
   "text.autoconfig.tradeenchantmentdisplay.option.bgColor": "背景颜色",
   "text.autoconfig.tradeenchantmentdisplay.option.displayOnTop": "显示在顶部",
   "text.autoconfig.tradeenchantmentdisplay.option.duration": "每个附魔持续的显示时间",

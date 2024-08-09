@@ -1,4 +1,6 @@
 {
+  "modmenu.descriptionTranslation.tradeenchantmentdisplay": "Automatically display the enchantment name of traded items",
+  "modmenu.nameTranslation.tradeenchantmentdisplay": "Trade Enchantment Display",
   "text.autoconfig.tradeenchantmentdisplay.option.bgColor": "Background Color",
   "text.autoconfig.tradeenchantmentdisplay.option.displayOnTop": "Display on top",
   "text.autoconfig.tradeenchantmentdisplay.option.duration": "Display duration of each enchantment",
