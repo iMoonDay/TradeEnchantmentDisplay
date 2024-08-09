@@ -1,0 +1,32 @@
+modLoader = "javafml"
+loaderVersion = "[2,)"
+issueTrackerURL = "https://github.com/iMoonDay/TradeEnchantmentDisplay/issues"
+license = "MIT"
+clientSideOnly = true
+
+[[mods]]
+modId = "tradeenchantmentdisplay"
+version = "${version}"
+displayName = "Trade Enchantment Display"
+authors = "iMoonDay"
+description = "Automatically display the enchantment name of traded items"
+logoFile = "icon.png"
+displayURL = "https://modrinth.com/project/trade-enchantment-display"
+
+[[dependencies.tradeenchantmentdisplay]]
+modId = "neoforge"
+type = "required"
+versionRange = "[20,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.tradeenchantmentdisplay]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.20.5,)"
+ordering = "NONE"
+side = "BOTH"
+
+
+[[mixins]]
+config = "tradeenchantmentdisplay.mixins.json"
