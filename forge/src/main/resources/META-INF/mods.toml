@@ -1,6 +1,6 @@
 modLoader = "javafml"
 loaderVersion = "[46,)"
-#issueTrackerURL = ""
+issueTrackerURL = "https://github.com/iMoonDay/TradeEnchantmentDisplay/issues"
 license = "MIT"
 clientSideOnly = true
 
@@ -11,6 +11,7 @@ displayName = "Trade Enchantment Display"
 authors = "iMoonDay"
 description = "Automatically display the enchantment name of traded items"
 logoFile = "icon.png"
+displayURL = "https://modrinth.com/project/trade-enchantment-display"
 
 [[dependencies.tradeenchantmentdisplay]]
 modId = "forge"
@@ -25,4 +26,11 @@ mandatory = true
 versionRange = "[1.20,)"
 ordering = "NONE"
 side = "BOTH"
+
+[[dependencies.tradeenchantmentdisplay]]
+modId = "cloth_config"
+mandatory = true
+versionRange = "*"
+ordering = "NONE"
+side = "CLIENT"
 
