@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "tradeenchantmentdisplay",
+  "version": "${version}",
+  "name": "Trade Enchantment Display",
+  "description": "",
+  "authors": [
+    "iMoonDay"
+  ],
+  "contact": {
+    "homepage": ""
+  },
+  "license": "MIT",
+  "icon": "assets/tradeenchantmentdisplay/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.imoonday.tradeenchantmentdisplay.fabric.TradeEnchantmentDisplayFabric"
+    ],
+    "modmenu": [
+      "com.imoonday.tradeenchantmentdisplay.fabric.ModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    "tradeenchantmentdisplay.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.20",
+    "java": ">=17",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
+  }
+}

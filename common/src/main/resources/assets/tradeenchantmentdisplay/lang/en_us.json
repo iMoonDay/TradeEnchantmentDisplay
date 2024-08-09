@@ -1,0 +1,17 @@
+{
+  "text.autoconfig.tradeenchantmentdisplay.option.bgColor": "Background Color",
+  "text.autoconfig.tradeenchantmentdisplay.option.displayOnTop": "Display on top",
+  "text.autoconfig.tradeenchantmentdisplay.option.duration": "Display duration of each enchantment",
+  "text.autoconfig.tradeenchantmentdisplay.option.duration.@Tooltip": "0 = always show the first one",
+  "text.autoconfig.tradeenchantmentdisplay.option.enabled": "Enabled",
+  "text.autoconfig.tradeenchantmentdisplay.option.fontColor": "Font color",
+  "text.autoconfig.tradeenchantmentdisplay.option.offsetX": "X-axis offset",
+  "text.autoconfig.tradeenchantmentdisplay.option.offsetY": "Y-axis offset",
+  "text.autoconfig.tradeenchantmentdisplay.option.onlyEnchantedBooks": "Show only enchanted books",
+  "text.autoconfig.tradeenchantmentdisplay.option.pluralFormat": "Plural format",
+  "text.autoconfig.tradeenchantmentdisplay.option.pluralFormat.@Tooltip": "Full Name: $full_name, Name: $name, Level: $level, Index: $index, Total Enchantments: $size",
+  "text.autoconfig.tradeenchantmentdisplay.option.singularFormat": "Singular format",
+  "text.autoconfig.tradeenchantmentdisplay.option.singularFormat.@Tooltip": "Full Name: $full_name, Name: $name, Level: $level",
+  "text.autoconfig.tradeenchantmentdisplay.option.xAxisCentered": "X-axis centered",
+  "text.autoconfig.tradeenchantmentdisplay.title": "Trade Enchantment Display"
+}
