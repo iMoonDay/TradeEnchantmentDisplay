@@ -29,7 +29,7 @@ public abstract class MerchantScreenMixin extends AbstractContainerScreen<Mercha
         super(menu, playerInventory, title);
     }
 
-    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;renderGuiItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V", shift = At.Shift.AFTER, ordinal = 1), locals = LocalCapture.CAPTURE_FAILHARD)
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;renderGuiItemDecorations(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V", shift = At.Shift.AFTER, ordinal = 1), locals = LocalCapture.CAPTURE_FAILHARD)
     private void render(PoseStack poseStack, int mouseX, int mouseY, float partialTick, CallbackInfo ci, MerchantOffers merchantOffers, int i, int j, int k, int l, int m, Iterator var11, MerchantOffer merchantOffer, ItemStack itemStack, ItemStack itemStack2, ItemStack itemStack3, ItemStack itemStack4, int n) {
         EnchantmentNamesRenderer.render(poseStack, font, itemStack4, i, n, drawTick);
     }
