@@ -55,10 +55,11 @@ public class EnchantmentNamesRenderer {
 
     private static String generateText(int drawTick, int size, List<Object2IntMap.Entry<Holder<Enchantment>>> entries) {
         int index = config.duration == 0 ? 0 : drawTick / config.duration % size;
-        Enchantment enchantment = entries.get(index).getKey().value();
+        Holder<Enchantment> holder = entries.get(index).getKey();
+        Enchantment enchantment = holder.value();
         int level = entries.get(index).getIntValue();
-        String fullName = enchantment.getFullname(level).getString();
-        String name = Component.translatable(enchantment.getDescriptionId()).getString();
+        String fullName = Enchantment.getFullname(holder, level).getString();
+        String name = enchantment.description().getString();
         String levelText = "";
         if (level != 1 || enchantment.getMaxLevel() != 1) {
             levelText = Component.translatable("enchantment.level." + level).getString();

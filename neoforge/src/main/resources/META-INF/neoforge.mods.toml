@@ -16,14 +16,14 @@ displayURL = "https://modrinth.com/project/trade-enchantment-display"
 [[dependencies.tradeenchantmentdisplay]]
 modId = "neoforge"
 type = "required"
-versionRange = "[20,)"
+versionRange = "[21,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.tradeenchantmentdisplay]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.20.5,)"
+versionRange = "[1.21,)"
 ordering = "NONE"
 side = "BOTH"
 
