@@ -1,7 +1,7 @@
 package com.imoonday.tradeenchantmentdisplay.mixin;
 
 import com.imoonday.tradeenchantmentdisplay.EnchantmentNamesRenderer;
-import net.minecraft.client.gui.GuiGraphics;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.MerchantScreen;
 import net.minecraft.network.chat.Component;
@@ -29,9 +29,9 @@ public abstract class MerchantScreenMixin extends AbstractContainerScreen<Mercha
         super(menu, playerInventory, title);
     }
 
-    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V", shift = At.Shift.AFTER, ordinal = 1), locals = LocalCapture.CAPTURE_FAILHARD)
-    private void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci, MerchantOffers merchantOffers, int i, int j, int k, int l, int m, Iterator var11, MerchantOffer merchantOffer, ItemStack itemStack, ItemStack itemStack2, ItemStack itemStack3, ItemStack itemStack4, int n) {
-        EnchantmentNamesRenderer.render(guiGraphics, font, itemStack4, i, n, drawTick);
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;renderGuiItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V", shift = At.Shift.AFTER, ordinal = 1), locals = LocalCapture.CAPTURE_FAILHARD)
+    private void render(PoseStack poseStack, int mouseX, int mouseY, float partialTick, CallbackInfo ci, MerchantOffers merchantOffers, int i, int j, int k, int l, int m, Iterator var11, MerchantOffer merchantOffer, ItemStack itemStack, ItemStack itemStack2, ItemStack itemStack3, ItemStack itemStack4, int n) {
+        EnchantmentNamesRenderer.render(poseStack, font, itemStack4, i, n, drawTick);
     }
 
     @Override

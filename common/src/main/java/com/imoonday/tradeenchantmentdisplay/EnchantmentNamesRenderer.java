@@ -1,8 +1,9 @@
 package com.imoonday.tradeenchantmentdisplay;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -21,7 +22,7 @@ public class EnchantmentNamesRenderer {
     public static final String SIZE = "$size";
     private static ModConfig config;
 
-    public static void render(GuiGraphics guiGraphics, Font font, ItemStack stack, int leftX, int topY, int drawTick) {
+    public static void render(PoseStack poseStack, Font font, ItemStack stack, int leftX, int topY, int drawTick) {
         if (config == null) {
             config = AutoConfig.getConfigHolder(ModConfig.class).get();
         }
@@ -35,18 +36,21 @@ public class EnchantmentNamesRenderer {
                 }
                 String text = generateText(drawTick, size, entries);
                 if (config.displayOnTop) {
-                    guiGraphics.pose().translate(0.0f, 0.0f, 200.0f);
+                    poseStack.translate(0.0f, 0.0f, 300.0f);
                 }
                 if (config.xAxisCentered) {
                     if (config.bgColor != 0) {
-                        guiGraphics.fill(leftX + config.offsetX - font.width(text) / 2 - 2, topY + config.offsetY - 2, leftX + config.offsetX + font.width(text) / 2 + 2, topY + config.offsetY + font.lineHeight + 2, config.bgColor);
+                        Screen.fill(poseStack, leftX + config.offsetX - font.width(text) / 2 - 2, topY + config.offsetY - 2, leftX + config.offsetX + font.width(text) / 2 + 2, topY + config.offsetY + font.lineHeight + 2, config.bgColor);
                     }
-                    guiGraphics.drawCenteredString(font, text, leftX + config.offsetX, topY + config.offsetY, config.fontColor);
+                    Screen.drawCenteredString(poseStack, font, text, leftX + config.offsetX, topY + config.offsetY, config.fontColor);
                 } else {
                     if (config.bgColor != 0) {
-                        guiGraphics.fill(leftX + config.offsetX - 2, topY + config.offsetY - 2, leftX + config.offsetX + font.width(text) + 2, topY + config.offsetY + font.lineHeight + 2, config.bgColor);
+                        Screen.fill(poseStack, leftX + config.offsetX - 2, topY + config.offsetY - 2, leftX + config.offsetX + font.width(text) + 2, topY + config.offsetY + font.lineHeight + 2, config.bgColor);
                     }
-                    guiGraphics.drawString(font, text, leftX + config.offsetX, topY + config.offsetY, config.fontColor);
+                    Screen.drawString(poseStack, font, text, leftX + config.offsetX, topY + config.offsetY, config.fontColor);
+                }
+                if (config.displayOnTop) {
+                    poseStack.translate(0.0f, 0.0f, -300.0f);
                 }
             }
         }
