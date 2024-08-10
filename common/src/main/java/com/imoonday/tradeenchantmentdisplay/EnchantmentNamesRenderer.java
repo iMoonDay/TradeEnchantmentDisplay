@@ -10,6 +10,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,8 +28,8 @@ public class EnchantmentNamesRenderer {
             config = AutoConfig.getConfigHolder(ModConfig.class).get();
         }
         if (config == null || !config.enabled) return;
-        if (stack.is(Items.ENCHANTED_BOOK) || !config.onlyEnchantedBooks && stack.isEnchanted()) {
-            List<Map.Entry<Enchantment, Integer>> entries = EnchantmentHelper.getEnchantments(stack).entrySet().stream().toList();
+        if (stack.getItem() == Items.ENCHANTED_BOOK || !config.onlyEnchantedBooks && stack.isEnchanted()) {
+            List<Map.Entry<Enchantment, Integer>> entries = new ArrayList<>(EnchantmentHelper.getEnchantments(stack).entrySet());
             if (!entries.isEmpty()) {
                 int size = entries.size();
                 if (config.duration < 0) {

@@ -35,8 +35,8 @@ public abstract class MerchantScreenMixin extends AbstractContainerScreen<Mercha
     }
 
     @Override
-    protected void containerTick() {
-        super.containerTick();
+    public void tick() {
+        super.tick();
         drawTick++;
     }
 }

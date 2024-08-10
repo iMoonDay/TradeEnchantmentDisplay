@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[37,)"
+loaderVersion = "[36,)"
 issueTrackerURL = "https://github.com/iMoonDay/TradeEnchantmentDisplay/issues"
 license = "MIT"
 clientSideOnly = true
@@ -16,19 +16,19 @@ displayURL = "https://modrinth.com/project/trade-enchantment-display"
 [[dependencies.tradeenchantmentdisplay]]
 modId = "forge"
 mandatory = true
-versionRange = "[37,)"
+versionRange = "[36,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.tradeenchantmentdisplay]]
 modId = "minecraft"
 mandatory = true
-versionRange = "[1.17,)"
+versionRange = "[1.16,)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.tradeenchantmentdisplay]]
-modId = "cloth_config"
+modId = "cloth-config"
 mandatory = true
 versionRange = "*"
 ordering = "NONE"
