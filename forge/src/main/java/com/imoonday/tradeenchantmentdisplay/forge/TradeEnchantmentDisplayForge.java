@@ -4,7 +4,7 @@ import com.imoonday.tradeenchantmentdisplay.ModConfig;
 import com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.ConfigScreenHandler;
+import net.minecraftforge.client.ConfigGuiHandler;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -18,8 +18,8 @@ public final class TradeEnchantmentDisplayForge {
 
     private static class Registry {
         private static void registerModsPage() {
-            ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class, () -> {
-                return new ConfigScreenHandler.ConfigScreenFactory((client, parent) -> {
+            ModLoadingContext.get().registerExtensionPoint(ConfigGuiHandler.ConfigGuiFactory.class, () -> {
+                return new ConfigGuiHandler.ConfigGuiFactory((client, parent) -> {
                     return AutoConfig.getConfigScreen(ModConfig.class, parent).get();
                 });
             });

@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -61,10 +61,10 @@ public class EnchantmentNamesRenderer {
         Enchantment enchantment = entries.get(index).getKey();
         int level = entries.get(index).getValue();
         String fullName = enchantment.getFullname(level).getString();
-        String name = Component.translatable(enchantment.getDescriptionId()).getString();
+        String name = I18n.get(enchantment.getDescriptionId());
         String levelText = "";
         if (level != 1 || enchantment.getMaxLevel() != 1) {
-            levelText = Component.translatable("enchantment.level." + level).getString();
+            levelText = I18n.get("enchantment.level." + level);
         }
         String text;
         if (size > 1) {
