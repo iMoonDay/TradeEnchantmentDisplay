@@ -4,10 +4,10 @@ import com.imoonday.tradeenchantmentdisplay.ModConfig;
 import com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.ConfigGuiHandler;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fmlclient.ConfigGuiHandler;
 
 @Mod(TradeEnchantmentDisplay.MOD_ID)
 public final class TradeEnchantmentDisplayForge {
