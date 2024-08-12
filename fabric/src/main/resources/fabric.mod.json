@@ -14,7 +14,7 @@
   },
   "license": "MIT",
   "icon": "assets/tradeenchantmentdisplay/icon.png",
-  "environment": "*",
+  "environment": "client",
   "entrypoints": {
     "client": [
       "com.imoonday.tradeenchantmentdisplay.fabric.TradeEnchantmentDisplayFabric"
