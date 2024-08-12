@@ -10,18 +10,20 @@ public class ModConfig implements ConfigData {
     public boolean enabled = true;
     public boolean onlyEnchantedBooks = false;
     public int offsetX = 82;
-    public int offsetY = 10;
+    public int offsetY = 12;
     public boolean xAxisCentered = true;
+    @ConfigEntry.BoundedDiscrete(min = 20, max = 200)
+    public int fontScale = 85;
     @ConfigEntry.ColorPicker
     public int fontColor = 0xFFFFFF;
     @ConfigEntry.ColorPicker(allowAlpha = true)
     public int bgColor = 0x00000000;
     @ConfigEntry.BoundedDiscrete(max = 20 * 5)
-    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.Gui.PrefixText
     public int duration = 20;
     public boolean displayOnTop = true;
-    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.Gui.PrefixText
     public String singularFormat = "$full_name";
-    @ConfigEntry.Gui.Tooltip
-    public String pluralFormat = "$full_name ($index/$size)";
+    @ConfigEntry.Gui.PrefixText
+    public String pluralFormat = "$full_name ($index/$total)";
 }

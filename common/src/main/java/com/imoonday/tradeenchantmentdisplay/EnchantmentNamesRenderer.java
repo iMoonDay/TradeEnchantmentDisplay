@@ -20,6 +20,7 @@ public class EnchantmentNamesRenderer {
     public static final String LEVEL = "$level";
     public static final String INDEX = "$index";
     public static final String SIZE = "$size";
+    public static final String TOTAL = "$total";
     private static ModConfig config;
 
     public static void render(PoseStack poseStack, Font font, ItemStack stack, int leftX, int topY, int drawTick) {
@@ -35,23 +36,28 @@ public class EnchantmentNamesRenderer {
                     config.duration = 0;
                 }
                 String text = generateText(drawTick, size, entries);
+                poseStack.pushPose();
                 if (config.displayOnTop) {
-                    poseStack.translate(0.0f, 0.0f, 300.0f);
+                    poseStack.translate(0.0f, 0.0f, 200.0f);
                 }
+                float scale = config.fontScale / 100.0f;
+                if (scale != 1.0f) {
+                    poseStack.scale(scale, scale, 1.0f);
+                }
+                int x = (int) ((leftX + config.offsetX) / scale);
+                int y = (int) ((topY + config.offsetY) / scale);
                 if (config.xAxisCentered) {
                     if (config.bgColor != 0) {
-                        Screen.fill(poseStack, leftX + config.offsetX - font.width(text) / 2 - 2, topY + config.offsetY - 2, leftX + config.offsetX + font.width(text) / 2 + 2, topY + config.offsetY + font.lineHeight + 2, config.bgColor);
+                        Screen.fill(poseStack, x - font.width(text) / 2 - 2, y - 2, x + font.width(text) / 2 + 2, y + font.lineHeight + 1, config.bgColor);
                     }
-                    Screen.drawCenteredString(poseStack, font, text, leftX + config.offsetX, topY + config.offsetY, config.fontColor);
+                    Screen.drawCenteredString(poseStack, font, text, x, y, config.fontColor);
                 } else {
                     if (config.bgColor != 0) {
-                        Screen.fill(poseStack, leftX + config.offsetX - 2, topY + config.offsetY - 2, leftX + config.offsetX + font.width(text) + 2, topY + config.offsetY + font.lineHeight + 2, config.bgColor);
+                        Screen.fill(poseStack, x - 2, y - 2, x + font.width(text) + 2, y + font.lineHeight + 1, config.bgColor);
                     }
-                    Screen.drawString(poseStack, font, text, leftX + config.offsetX, topY + config.offsetY, config.fontColor);
+                    Screen.drawString(poseStack, font, text, x, y, config.fontColor);
                 }
-                if (config.displayOnTop) {
-                    poseStack.translate(0.0f, 0.0f, -300.0f);
-                }
+                poseStack.popPose();
             }
         }
     }
@@ -68,7 +74,7 @@ public class EnchantmentNamesRenderer {
         }
         String text;
         if (size > 1) {
-            text = config.pluralFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText).replace(INDEX, String.valueOf(index + 1)).replace(SIZE, String.valueOf(size));
+            text = config.pluralFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText).replace(INDEX, String.valueOf(index + 1)).replace(TOTAL, String.valueOf(size)).replace(SIZE, String.valueOf(size));
         } else {
             text = config.singularFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText);
         }
