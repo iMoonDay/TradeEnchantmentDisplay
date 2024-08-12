@@ -1,5 +1,6 @@
 package com.imoonday.tradeenchantmentdisplay;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.gui.Font;
@@ -20,6 +21,7 @@ public class EnchantmentNamesRenderer {
     public static final String LEVEL = "$level";
     public static final String INDEX = "$index";
     public static final String SIZE = "$size";
+    public static final String TOTAL = "$total";
     private static ModConfig config;
 
     public static void render(GuiGraphics guiGraphics, Font font, ItemStack stack, int leftX, int topY, int drawTick) {
@@ -35,20 +37,29 @@ public class EnchantmentNamesRenderer {
                     config.duration = 0;
                 }
                 String text = generateText(drawTick, size, entries);
+                PoseStack poseStack = guiGraphics.pose();
+                poseStack.pushPose();
                 if (config.displayOnTop) {
-                    guiGraphics.pose().translate(0.0f, 0.0f, 200.0f);
+                    poseStack.translate(0.0f, 0.0f, 200.0f);
                 }
+                float scale = config.fontScale / 100.0f;
+                if (scale != 1.0f) {
+                    poseStack.scale(scale, scale, 1.0f);
+                }
+                int x = (int) ((leftX + config.offsetX) / scale);
+                int y = (int) ((topY + config.offsetY) / scale);
                 if (config.xAxisCentered) {
                     if (config.bgColor != 0) {
-                        guiGraphics.fill(leftX + config.offsetX - font.width(text) / 2 - 2, topY + config.offsetY - 2, leftX + config.offsetX + font.width(text) / 2 + 2, topY + config.offsetY + font.lineHeight + 2, config.bgColor);
+                        guiGraphics.fill(x - font.width(text) / 2 - 2, y - 2, x + font.width(text) / 2 + 2, y + font.lineHeight + 1, config.bgColor);
                     }
-                    guiGraphics.drawCenteredString(font, text, leftX + config.offsetX, topY + config.offsetY, config.fontColor);
+                    guiGraphics.drawCenteredString(font, text, x, y, config.fontColor);
                 } else {
                     if (config.bgColor != 0) {
-                        guiGraphics.fill(leftX + config.offsetX - 2, topY + config.offsetY - 2, leftX + config.offsetX + font.width(text) + 2, topY + config.offsetY + font.lineHeight + 2, config.bgColor);
+                        guiGraphics.fill(x - 2, y - 2, x + font.width(text) + 2, y + font.lineHeight + 1, config.bgColor);
                     }
-                    guiGraphics.drawString(font, text, leftX + config.offsetX, topY + config.offsetY, config.fontColor);
+                    guiGraphics.drawString(font, text, x, y, config.fontColor);
                 }
+                poseStack.popPose();
             }
         }
     }
@@ -66,7 +77,7 @@ public class EnchantmentNamesRenderer {
         }
         String text;
         if (size > 1) {
-            text = config.pluralFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText).replace(INDEX, String.valueOf(index + 1)).replace(SIZE, String.valueOf(size));
+            text = config.pluralFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText).replace(INDEX, String.valueOf(index + 1)).replace(TOTAL, String.valueOf(size)).replace(SIZE, String.valueOf(size));
         } else {
             text = config.singularFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText);
         }
