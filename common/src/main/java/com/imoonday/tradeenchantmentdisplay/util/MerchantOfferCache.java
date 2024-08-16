@@ -1,26 +1,41 @@
 package com.imoonday.tradeenchantmentdisplay.util;
 
+import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
+import com.imoonday.tradeenchantmentdisplay.mixin.MinecraftServerAccessor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.item.trading.MerchantOffer;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay.LOGGER;
 
 public class MerchantOfferCache {
 
     private static final MerchantOfferCache INSTANCE = new MerchantOfferCache();
     private final Map<UUID, MerchantOfferInfo> cache = new HashMap<>();
+    private static File cacheFile;
 
     public static MerchantOfferCache getInstance() {
         return INSTANCE;
     }
 
-    @Nullable
     public MerchantOfferInfo get(UUID uuid) {
         return cache.get(uuid);
     }
 
-    @Nullable
     public MerchantOfferInfo get(int id) {
         return cache.values().stream().filter(info -> info.hasId(id)).findFirst().orElse(null);
     }
@@ -28,14 +43,155 @@ public class MerchantOfferCache {
     public boolean set(UUID uuid, MerchantOfferInfo info) {
         boolean contains = cache.containsKey(uuid);
         cache.put(uuid, info);
+        save();
         return contains;
     }
 
     public void remove(UUID uuid) {
         cache.remove(uuid);
+        save();
     }
 
     public void clear() {
         cache.clear();
+        save();
+    }
+
+    public boolean contains(UUID uuid) {
+        return cache.containsKey(uuid);
+    }
+
+    public void update(UUID uuid, MerchantOfferInfo info) {
+        MerchantOfferInfo oldInfo = get(uuid);
+        if (oldInfo != null) {
+            oldInfo.update(info);
+            save();
+        } else {
+            set(uuid, info);
+        }
+    }
+
+    public void save() {
+        if (!ModConfig.getCache().enabled) return;
+//        System.out.println("Saving cache");
+        String name = getCurrentWorldName();
+        if (name == null) {
+            LOGGER.warn("Failed to get current world name");
+            return;
+        }
+        CompoundTag uuids = new CompoundTag();
+        cache.forEach((uuid, info) -> {
+            ListTag offers = new ListTag();
+            for (MerchantOffer offer : info.getOffers()) {
+                offers.add(offer.createTag());
+            }
+            uuids.put(uuid.toString(), offers);
+        });
+        CompoundTag root = new CompoundTag();
+        root.put(name, uuids);
+        try {
+            File file = getCacheFile();
+            if (!file.exists() && !file.createNewFile()) {
+                LOGGER.warn("Failed to create cache file");
+                return;
+            }
+            CompoundTag oldCache;
+            try {
+                oldCache = NbtIo.readCompressed(file);
+            } catch (IOException e) {
+//                System.out.println("Failed to read exist cache file");
+                oldCache = new CompoundTag();
+            }
+            oldCache.merge(root);
+            NbtIo.writeCompressed(oldCache, file);
+//            System.out.println("Cache saved");
+        } catch (IOException e) {
+            LOGGER.error("Failed to save cache");
+            System.out.println(e);
+        }
+    }
+
+    public void load() {
+        if (!ModConfig.getCache().enabled) return;
+        LOGGER.info("Loading cache");
+        String name = getCurrentWorldName();
+        if (name == null) {
+            LOGGER.warn("Failed to get current world name");
+            return;
+        }
+        CompoundTag root;
+        File file = getCacheFile();
+        if (!file.exists()) {
+            LOGGER.warn("No cache file exist");
+            return;
+        }
+        try {
+            root = NbtIo.readCompressed(file);
+        } catch (IOException e) {
+            LOGGER.error("Failed to read cache file");
+            System.out.println(e);
+            return;
+        }
+        if (!root.contains(name)) {
+            LOGGER.info("No cache for current world");
+            return;
+        }
+        CompoundTag uuids = root.getCompound(name);
+        uuids.getAllKeys().forEach(key -> {
+            ListTag offers = uuids.getList(key, Tag.TAG_COMPOUND);
+            List<MerchantOffer> list = offers.stream().map(tag -> new MerchantOffer((CompoundTag) tag)).toList();
+            MerchantOfferInfo info = new MerchantOfferInfo(list);
+            cache.put(UUID.fromString(key), info);
+        });
+        LOGGER.info("Cache loaded");
+    }
+
+    @Nullable
+    public static String getCurrentWorldName() {
+        String name = null;
+        Minecraft mc = Minecraft.getInstance();
+        try {
+            if (mc.hasSingleplayerServer()) {
+                name = ((MinecraftServerAccessor) mc.getSingleplayerServer()).getStorageSource().getLevelId();
+            } else {
+                ServerData data = mc.getCurrentServer();
+                if (data != null) {
+                    name = ModConfig.getCache().distinguishPortBetweenServers ? data.ip : data.ip.split(":")[0];
+                }
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return name;
+    }
+
+    private static File getCacheFile() {
+        if (cacheFile == null) {
+            String filePath = ModConfig.getCache().filePath;
+            if (filePath.isEmpty()) {
+                filePath = "trades.nbt";
+            }
+            cacheFile = Minecraft.getInstance().gameDirectory.toPath().resolve(filePath).toFile();
+        }
+        return cacheFile;
+    }
+
+    public static void update(Minecraft mc) {
+        LocalPlayer player = mc.player;
+        MultiPlayerGameMode gameMode = mc.gameMode;
+        if (player != null && mc.level != null && gameMode != null) {
+            MerchantOfferCache cache = getInstance();
+            boolean tryInteract = ModConfig.getGeneric().alwaysAttemptToGetNearbyOffers;
+            mc.level.getEntities(player, player.getBoundingBox().inflate(gameMode.getPickRange())).forEach(entity -> {
+                UUID uuid = entity.getUUID();
+                if (cache.contains(uuid)) {
+                    if (entity.isRemoved() || !entity.isAlive()) {
+                        cache.remove(uuid);
+                    }
+                } else if (tryInteract && MerchantOfferUtils.isValidMerchant(entity)) {
+                    MerchantOfferUtils.tryInteract(entity);
+                }
+            });
+        }
     }
 }

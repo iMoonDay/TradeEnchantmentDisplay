@@ -1,35 +1,27 @@
 package com.imoonday.tradeenchantmentdisplay.renderer;
 
-import com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay;
-import com.imoonday.tradeenchantmentdisplay.config.MerchantOfferAcquisitionMethod;
 import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
-import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferCache;
 import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferInfo;
-import me.shedaniel.autoconfig.AutoConfig;
+import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferUtils;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ServerboundInteractPacket;
-import net.minecraft.world.InteractionHand;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.npc.AbstractVillager;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.trading.MerchantOffer;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec2;
+import org.joml.Matrix4f;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Set;
 
 public class EnchantmentRenderer {
 
@@ -38,52 +30,65 @@ public class EnchantmentRenderer {
     public static final String LEVEL = "$level";
     public static final String INDEX = "$index";
     public static final String SIZE = "$size";
+    public static final String TOTAL = "$total";
     private static ModConfig config;
 
     public static void renderInScreen(GuiGraphics guiGraphics, Font font, ItemStack stack, int leftX, int topY, int drawTick) {
-        setConfigIfAbsent();
-        if (config == null) return;
+        if (!initializeConfigAndCheck()) return;
         ModConfig.Screen settings = config.screen;
         if (!settings.enabled) return;
-        if (shouldPass(stack, settings)) return;
+        if (shouldPass(stack, settings.onlyEnchantedBooks)) return;
         List<Map.Entry<Enchantment, Integer>> entries = EnchantmentHelper.getEnchantments(stack).entrySet().stream().toList();
         if (!entries.isEmpty()) {
-            int size = entries.size();
             if (settings.duration < 0) {
                 settings.duration = 0;
             }
-            String text = generateText(drawTick, size, entries);
+            String text = generateText(entries, drawTick);
+            PoseStack poseStack = guiGraphics.pose();
+            poseStack.pushPose();
             if (settings.displayOnTop) {
-                guiGraphics.pose().translate(0.0f, 0.0f, 200.0f);
+                poseStack.translate(0.0f, 0.0f, 200.0f);
             }
-            if (settings.xAxisCentered) {
-                if (settings.bgColor != 0) {
-                    guiGraphics.fill(leftX + settings.offsetX - font.width(text) / 2 - 2, topY + settings.offsetY - 2, leftX + settings.offsetX + font.width(text) / 2 + 2, topY + settings.offsetY + font.lineHeight + 2, settings.bgColor);
-                }
-                guiGraphics.drawCenteredString(font, text, leftX + settings.offsetX, topY + settings.offsetY, settings.fontColor);
-            } else {
-                if (settings.bgColor != 0) {
-                    guiGraphics.fill(leftX + settings.offsetX - 2, topY + settings.offsetY - 2, leftX + settings.offsetX + font.width(text) + 2, topY + settings.offsetY + font.lineHeight + 2, settings.bgColor);
-                }
-                guiGraphics.drawString(font, text, leftX + settings.offsetX, topY + settings.offsetY, settings.fontColor);
+            float scale = settings.fontScale / 100.0f;
+            if (scale != 1.0f) {
+                poseStack.scale(scale, scale, 1.0f);
             }
+            int x = (int) ((leftX + settings.offsetX) / scale);
+            int y = (int) ((topY + settings.offsetY) / scale);
+            drawTextWithBackground(guiGraphics, font, text, x, y, settings);
+            poseStack.popPose();
         }
     }
 
-    private static String generateText(int drawTick, int size, List<Map.Entry<Enchantment, Integer>> entries) {
+    private static void drawTextWithBackground(GuiGraphics guiGraphics, Font font, String text, int x, int y, ModConfig.Screen settings) {
+        if (settings.xAxisCentered) {
+            if (settings.bgColor != 0) {
+                guiGraphics.fill(x - font.width(text) / 2 - 2, y - 2, x + font.width(text) / 2 + 2, y + font.lineHeight + 1, settings.bgColor);
+            }
+            guiGraphics.drawCenteredString(font, text, x, y, settings.fontColor);
+        } else {
+            if (settings.bgColor != 0) {
+                guiGraphics.fill(x - 2, y - 2, x + font.width(text) + 2, y + font.lineHeight + 1, settings.bgColor);
+            }
+            guiGraphics.drawString(font, text, x, y, settings.fontColor);
+        }
+    }
+
+    private static String generateText(List<Map.Entry<Enchantment, Integer>> entries, int drawTick) {
+        int size = entries.size();
         ModConfig.Screen settings = config.screen;
         int index = settings.duration == 0 ? 0 : drawTick / settings.duration % size;
         Enchantment enchantment = entries.get(index).getKey();
         int level = entries.get(index).getValue();
         String fullName = enchantment.getFullname(level).getString();
-        String name = Component.translatable(enchantment.getDescriptionId()).getString();
+        String name = I18n.get(enchantment.getDescriptionId());
         String levelText = "";
         if (level != 1 || enchantment.getMaxLevel() != 1) {
-            levelText = Component.translatable("enchantment.level." + level).getString();
+            levelText = I18n.get("enchantment.level." + level);
         }
         String text;
         if (size > 1) {
-            text = settings.pluralFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText).replace(INDEX, String.valueOf(index + 1)).replace(SIZE, String.valueOf(size));
+            text = settings.pluralFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText).replace(INDEX, String.valueOf(index + 1)).replace(TOTAL, String.valueOf(size)).replace(SIZE, String.valueOf(size));
         } else {
             text = settings.singularFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText);
         }
@@ -91,116 +96,72 @@ public class EnchantmentRenderer {
     }
 
     public static void renderInHud(Minecraft mc, GuiGraphics guiGraphics) {
-        setConfigIfAbsent();
-        if (config == null || mc == null) return;
+        if (!initializeConfigAndCheck() || mc == null) return;
         ModConfig.Hud settings = config.hud;
         if (!settings.enabled) return;
-        List<MerchantOffer> offers = getMerchantOffers(mc, settings);
+        List<MerchantOffer> offers = MerchantOfferUtils.getMerchantOffers(mc, settings.onlyEnchantedBooks);
+        MerchantOfferRenderer renderer = new MerchantOfferRenderer(mc, guiGraphics, settings);
+        boolean onlyEnchantedBooks = settings.onlyEnchantedBooks;
+        renderer.render(offers, settings.offsetX, settings.offsetY, offer -> !shouldPass(offer.getResult(), onlyEnchantedBooks));
+    }
+
+    public static boolean shouldPass(ItemStack stack, boolean onlyEnchantedBooks) {
+        return !stack.is(Items.ENCHANTED_BOOK) && (onlyEnchantedBooks || !stack.isEnchanted());
+    }
+
+    public static void renderUnderNameTag(Entity entity, MerchantOfferInfo info, PoseStack poseStack, MultiBufferSource buffer, ItemRenderer itemRenderer, EntityRenderDispatcher dispatcher, Font font, int packedLight) {
+        if (!initializeConfigAndCheck()) return;
+        ModConfig.Merchant settings = config.merchant;
+        if (!settings.enabled) return;
+        List<MerchantOffer> offers = info.getOffers(EnchantmentRenderer::isStandardEnchantedBookTrade);
         if (offers.isEmpty()) return;
-        int x = settings.offsetX;
-        int y = settings.offsetY;
-        int paddingY = settings.paddingY;
-        MerchantOfferRenderer renderer = new MerchantOfferRenderer(mc, guiGraphics, settings, stack -> shouldPass(stack, settings));
-        int maxX = 0;
-        for (MerchantOffer offer : offers) {
-            Vec2 dimensions = renderer.calculateDimensions(offer, false);
-            if (y + dimensions.y + paddingY > mc.getWindow().getGuiScaledHeight()) {
-                y = settings.offsetY;
-                x += maxX + paddingY * 3;
-            }
-            renderer.render(offer, x, y);
-            y += (int) dimensions.y + paddingY * 3;
-            maxX = Math.max(maxX, x + (int) dimensions.x);
+        boolean discrete = entity.isDiscrete();
+        float offsetY = entity.getNameTagOffsetY() + settings.offsetY;
+        int y = "deadmau5".equals(entity.getDisplayName().getString()) ? -10 : 0;
+        poseStack.pushPose();
+        poseStack.translate(0.0f, offsetY, 0.0f);
+        poseStack.mulPose(dispatcher.cameraOrientation());
+        poseStack.scale(-0.025f, -0.025f, 0.025f);
+        Matrix4f matrix4f = poseStack.last().pose();
+        float g = Minecraft.getInstance().options.getBackgroundOpacity(0.25f);
+        int bgColor = (int) (g * 255.0f) << 24;
+        if (settings.duration < 0) {
+            settings.duration = 0;
         }
-    }
-
-    private static List<MerchantOffer> getMerchantOffers(Minecraft mc, ModConfig.Hud settings) {
-        MerchantOfferAcquisitionMethod acquisitionMethod = settings.acquisitionMethod;
-        if (acquisitionMethod.shouldUseCache()) {
-            if (mc.hitResult instanceof EntityHitResult hitResult && hitResult.getType() != EntityHitResult.Type.MISS) {
-                Entity entity = hitResult.getEntity();
-                if (entity instanceof AbstractVillager merchant) {
-                    UUID uuid = merchant.getUUID();
-                    MerchantOfferCache cache = MerchantOfferCache.getInstance();
-                    MerchantOfferInfo info = cache.get(uuid);
-                    if (info == null && acquisitionMethod.shouldSimulate()) {
-                        info = MerchantOfferInfo.getInstance();
-                        if (info.hasOffers()) {
-                            cache.set(uuid, info.copy());
-                        } else {
-                            info = null;
-                        }
-                    }
-                    return info == null ? List.of() : info.getOffers(offer -> !shouldPass(offer.getResult(), settings));
-                }
+        int duration = settings.duration;
+        MerchantOffer offer = offers.get(duration == 0 ? 0 : entity.tickCount / duration % offers.size());
+        ItemStack stack = offer.getResult();
+        Set<Map.Entry<Enchantment, Integer>> entries = EnchantmentHelper.getEnchantments(stack).entrySet();
+        int nameColor = settings.nameColor;
+        String price = String.valueOf(offer.getCostA().getCount());
+        int priceColor = settings.priceColor;
+        for (Map.Entry<Enchantment, Integer> entry : entries) {
+            Enchantment enchantment = entry.getKey();
+            Integer level = entry.getValue();
+            String name = enchantment.getFullname(level).getString();
+            float x = -(font.width(name) + 4 + font.width(price)) / 2f;
+            font.drawInBatch(name, x, y, nameColor, false, matrix4f, buffer, !discrete ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL, bgColor, packedLight);
+            if (!discrete) {
+                font.drawInBatch(name, x, y, nameColor, false, matrix4f, buffer, Font.DisplayMode.NORMAL, 0, packedLight);
             }
-        }
-        MerchantOfferInfo info = MerchantOfferInfo.getInstance();
-        if (!info.hasOffers()) return List.of();
-        return info.getOffers(offer -> !shouldPass(offer.getResult(), settings));
-    }
-
-    public static boolean shouldPass(ItemStack stack, ModConfig.Screen settings) {
-        return !stack.is(Items.ENCHANTED_BOOK) && (settings.onlyEnchantedBooks || !stack.isEnchanted());
-    }
-
-    public static boolean shouldPass(ItemStack stack, ModConfig.Hud settings) {
-        return !stack.is(Items.ENCHANTED_BOOK) && (settings.onlyEnchantedBooks || !stack.isEnchanted());
-    }
-
-    public static void update() {
-        setConfigIfAbsent();
-        if (config == null) return;
-        ModConfig.Hud settings = config.hud;
-        if (!settings.enabled) return;
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.screen != null) return;
-        AbstractVillager merchant = getValidMerchant(mc);
-        MerchantOfferInfo info = MerchantOfferInfo.getInstance();
-        if (merchant != null) {
-            if (info.hasId(merchant.getId())) return;
-            info.clearOffers();
-            info.setId(merchant.getId());
-//            if (settings.acquisitionMethod.shouldUseCache() && MerchantOfferCache.getInstance().get(merchant.getUUID()) != null) {
-//                return;
-//            }
-            ClientPacketListener connection = mc.getConnection();
-            if (connection != null) {
-//                connection.send(new ServerboundPickItemPacket(mc.player.getInventory().selected));
-                connection.send(ServerboundInteractPacket.createInteractionPacket(merchant, mc.player.isShiftKeyDown(), InteractionHand.MAIN_HAND));
+            x += font.width(name) + 4;
+            font.drawInBatch(price, x, y, priceColor, false, matrix4f, buffer, !discrete ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL, bgColor, packedLight);
+            if (!discrete) {
+                font.drawInBatch(price, x, y, priceColor, false, matrix4f, buffer, Font.DisplayMode.NORMAL, 0, packedLight);
             }
-        } else if (!TradeEnchantmentDisplay.isTrading() || !AutoConfig.getConfigHolder(ModConfig.class).get().hud.acquisitionMethod.shouldUseCache()) {
-            info.clearId();
+            poseStack.translate(0.0f, font.lineHeight + 2, 0.0f);
         }
+        poseStack.popPose();
     }
 
-    public static AbstractVillager getValidMerchant(Minecraft mc) {
-        if (mc == null) return null;
-        LocalPlayer player = mc.player;
-        if (player == null) return null;
-        if (TradeEnchantmentDisplay.isTrading()) return null;
-        HitResult hitResult = mc.hitResult;
-        if (!(hitResult instanceof EntityHitResult entityHitResult) || entityHitResult.getType() == EntityHitResult.Type.MISS) {
-            return null;
-        }
-        Entity entity = entityHitResult.getEntity();
-        if (!(entity instanceof AbstractVillager merchant)) return null;
-        if (merchant instanceof Villager villager) {
-            VillagerProfession profession = villager.getVillagerData().getProfession();
-            if (profession == VillagerProfession.NONE || profession == VillagerProfession.NITWIT) {
-                return null;
-            }
-            ItemStack stack = player.getMainHandItem();
-            if (stack.is(Items.VILLAGER_SPAWN_EGG) || stack.is(Items.NAME_TAG)) {
-                return null;
-            }
-        }
-        return merchant;
+    public static boolean isStandardEnchantedBookTrade(MerchantOffer offer) {
+        return offer.getCostA().is(Items.EMERALD) && offer.getCostB().is(Items.BOOK) && offer.getResult().is(Items.ENCHANTED_BOOK);
     }
 
-    private static void setConfigIfAbsent() {
+    private static boolean initializeConfigAndCheck() {
         if (config == null) {
-            config = AutoConfig.getConfigHolder(ModConfig.class).get();
+            config = ModConfig.get();
         }
+        return config != null;
     }
 }

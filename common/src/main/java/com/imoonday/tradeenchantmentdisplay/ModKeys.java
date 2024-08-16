@@ -13,19 +13,34 @@ import java.util.function.Consumer;
 
 public class ModKeys {
 
-    public static final String CATEGORY = "key.categories.tradeenchantmentdisplay";
-    public static final List<KeyBinding> KEYS = List.of(
-            new KeyBinding(new KeyMapping("key.tradeenchantmentdisplay.toggle_enabled", GLFW.GLFW_KEY_H, CATEGORY), KeyAction.of(ModKeys::handleToggleEnabled, ModKeys::handleToggleEnabledOnScreen), true)
+    private static final String CATEGORY = "key.categories.tradeenchantmentdisplay";
+    private static final String NAME_PREFIX = "key.tradeenchantmentdisplay.";
+    private static final List<KeyBinding> KEYS = List.of(
+            new KeyBinding(new KeyMapping(NAME_PREFIX + "toggle_enabled", GLFW.GLFW_KEY_H, CATEGORY), KeyAction.of(ModKeys::toggleEnabled, ModKeys::toggleEnabledOnScreen), true),
+            new KeyBinding(new KeyMapping(NAME_PREFIX + "open_config_screen", GLFW.GLFW_KEY_J, CATEGORY), ModKeys::openConfigScreen, false)
     );
 
-    private static void handleToggleEnabled(Minecraft mc) {
-        ModConfig.Hud settings = AutoConfig.getConfigHolder(ModConfig.class).get().hud;
-        settings.enabled = !settings.enabled;
+    public static List<KeyBinding> getKeys() {
+        return KEYS;
     }
 
-    private static void handleToggleEnabledOnScreen(Screen screen) {
+    private static void openConfigScreen(Minecraft mc) {
+        mc.setScreen(AutoConfig.getConfigScreen(ModConfig.class, mc.screen).get());
+    }
+
+    private static void toggleEnabled(Minecraft mc) {
+        if (mc.options.keyShift.isDown()) {
+            ModConfig.Merchant settings = ModConfig.getMerchant();
+            settings.enabled = !settings.enabled;
+        } else {
+            ModConfig.Hud settings = ModConfig.getHud();
+            settings.enabled = !settings.enabled;
+        }
+    }
+
+    private static void toggleEnabledOnScreen(Screen screen) {
         if (screen instanceof MerchantScreen) {
-            ModConfig.Screen settings = AutoConfig.getConfigHolder(ModConfig.class).get().screen;
+            ModConfig.Screen settings = ModConfig.getScreen();
             settings.enabled = !settings.enabled;
         }
     }

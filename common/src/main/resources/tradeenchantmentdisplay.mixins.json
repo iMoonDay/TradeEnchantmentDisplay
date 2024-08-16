@@ -5,11 +5,14 @@
   "minVersion": "0.8",
   "client": [
     "ClientPacketListenerMixin",
+    "EntityRenderDispatcherMixin",
+    "MinecraftServerAccessor",
     "LocalPlayerMixin",
     "MerchantScreenMixin",
     "MultiPlayerGameModeMixin"
   ],
   "mixins": [
+    "VillagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
