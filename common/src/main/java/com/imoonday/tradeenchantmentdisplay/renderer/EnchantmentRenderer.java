@@ -11,6 +11,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -22,6 +24,8 @@ import org.joml.Matrix4f;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class EnchantmentRenderer {
 
@@ -42,6 +46,7 @@ public class EnchantmentRenderer {
         if (!entries.isEmpty()) {
             if (settings.duration < 0) {
                 settings.duration = 0;
+                ModConfig.save();
             }
             String text = generateText(entries, drawTick);
             PoseStack poseStack = guiGraphics.pose();
@@ -113,7 +118,7 @@ public class EnchantmentRenderer {
         if (!initializeConfigAndCheck()) return;
         ModConfig.Merchant settings = config.merchant;
         if (!settings.enabled) return;
-        List<MerchantOffer> offers = info.getOffers(EnchantmentRenderer::isStandardEnchantedBookTrade);
+        List<MerchantOffer> offers = info.getOffers(offer -> isStandardEnchantedBookTrade(offer) && checkBlackList(offer));
         if (offers.isEmpty()) return;
         boolean discrete = entity.isDiscrete();
         float offsetY = entity.getNameTagOffsetY() + settings.offsetY;
@@ -127,6 +132,7 @@ public class EnchantmentRenderer {
         int bgColor = (int) (g * 255.0f) << 24;
         if (settings.duration < 0) {
             settings.duration = 0;
+            ModConfig.save();
         }
         int duration = settings.duration;
         MerchantOffer offer = offers.get(duration == 0 ? 0 : entity.tickCount / duration % offers.size());
@@ -152,6 +158,31 @@ public class EnchantmentRenderer {
             poseStack.translate(0.0f, font.lineHeight + 2, 0.0f);
         }
         poseStack.popPose();
+    }
+
+    public static boolean checkBlackList(MerchantOffer offer) {
+        List<String> list = config.merchant.enchantmentBlacklist;
+        if (list.isEmpty()) return true;
+        Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(offer.getResult());
+        for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+            Enchantment enchantment = entry.getKey();
+            ResourceLocation key = BuiltInRegistries.ENCHANTMENT.getKey(enchantment);
+            if (key == null) continue;
+            boolean anyMatch = list.stream().anyMatch(s -> {
+                try {
+                    Pattern pattern = Pattern.compile(s);
+                    return pattern.matcher(key.toString()).matches() ||
+                            pattern.matcher(I18n.get(enchantment.getDescriptionId())).matches() ||
+                            pattern.matcher(enchantment.getFullname(entry.getValue()).getString()).matches();
+                } catch (PatternSyntaxException e) {
+                    return false;
+                }
+            });
+            if (anyMatch) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static boolean isStandardEnchantedBookTrade(MerchantOffer offer) {

@@ -12,7 +12,6 @@ public final class TradeEnchantmentDisplay {
     public static final String MOD_ID = "tradeenchantmentdisplay";
     public static final Logger LOGGER = LogUtils.getLogger();
     private static boolean trading = false;
-    private static String currentWorldName = null;
 
     public static void init() {
         AutoConfig.register(ModConfig.class, PartitioningSerializer.wrap(GsonConfigSerializer::new));
@@ -24,13 +23,5 @@ public final class TradeEnchantmentDisplay {
 
     public static void setTrading(boolean trading) {
         TradeEnchantmentDisplay.trading = trading;
-    }
-
-    public static String getCurrentWorldName() {
-        return currentWorldName;
-    }
-
-    public static void setCurrentWorldName(String currentWorldName) {
-        TradeEnchantmentDisplay.currentWorldName = currentWorldName;
     }
 }

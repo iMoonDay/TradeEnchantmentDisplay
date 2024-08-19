@@ -6,12 +6,10 @@
   "client": [
     "ClientPacketListenerMixin",
     "EntityRenderDispatcherMixin",
-    "MinecraftServerAccessor",
     "LocalPlayerMixin",
     "MerchantScreenMixin",
-    "MultiPlayerGameModeMixin"
-  ],
-  "mixins": [
+    "MinecraftServerAccessor",
+    "MultiPlayerGameModeMixin",
     "VillagerMixin"
   ],
   "injectors": {

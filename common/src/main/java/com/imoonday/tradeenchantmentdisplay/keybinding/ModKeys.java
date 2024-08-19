@@ -1,4 +1,4 @@
-package com.imoonday.tradeenchantmentdisplay;
+package com.imoonday.tradeenchantmentdisplay.keybinding;
 
 import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
 import me.shedaniel.autoconfig.AutoConfig;
@@ -15,16 +15,18 @@ public class ModKeys {
 
     private static final String CATEGORY = "key.categories.tradeenchantmentdisplay";
     private static final String NAME_PREFIX = "key.tradeenchantmentdisplay.";
+    public static final KeyBinding TOGGLE_ENABLED = new KeyBinding(new KeyMapping(NAME_PREFIX + "toggle_enabled", GLFW.GLFW_KEY_H, CATEGORY), KeyAction.of(ModKeys::toggleEnabled, ModKeys::toggleEnabledOnScreen), true);
+    public static final KeyBinding OPEN_CONFIG_SCREEN = new KeyBinding(new KeyMapping(NAME_PREFIX + "open_config_screen", GLFW.GLFW_KEY_J, CATEGORY), ModKeys::openConfigScreen, false);
     private static final List<KeyBinding> KEYS = List.of(
-            new KeyBinding(new KeyMapping(NAME_PREFIX + "toggle_enabled", GLFW.GLFW_KEY_H, CATEGORY), KeyAction.of(ModKeys::toggleEnabled, ModKeys::toggleEnabledOnScreen), true),
-            new KeyBinding(new KeyMapping(NAME_PREFIX + "open_config_screen", GLFW.GLFW_KEY_J, CATEGORY), ModKeys::openConfigScreen, false)
+            TOGGLE_ENABLED,
+            OPEN_CONFIG_SCREEN
     );
 
     public static List<KeyBinding> getKeys() {
         return KEYS;
     }
 
-    private static void openConfigScreen(Minecraft mc) {
+    public static void openConfigScreen(Minecraft mc) {
         mc.setScreen(AutoConfig.getConfigScreen(ModConfig.class, mc.screen).get());
     }
 

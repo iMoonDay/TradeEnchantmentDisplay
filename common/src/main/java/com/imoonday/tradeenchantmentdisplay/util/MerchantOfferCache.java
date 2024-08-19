@@ -3,30 +3,27 @@ package com.imoonday.tradeenchantmentdisplay.util;
 import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
 import com.imoonday.tradeenchantmentdisplay.mixin.MinecraftServerAccessor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.Tag;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.trading.MerchantOffer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay.LOGGER;
 
 public class MerchantOfferCache {
 
     private static final MerchantOfferCache INSTANCE = new MerchantOfferCache();
-    private final Map<UUID, MerchantOfferInfo> cache = new HashMap<>();
+    private static final Set<UUID> REQUESTED_IDS = new HashSet<>();
     private static File cacheFile;
+    private final Map<UUID, MerchantOfferInfo> cache = new HashMap<>();
 
     public static MerchantOfferCache getInstance() {
         return INSTANCE;
@@ -50,11 +47,21 @@ public class MerchantOfferCache {
     public void remove(UUID uuid) {
         cache.remove(uuid);
         save();
+        unmarkRequested(uuid);
+    }
+
+    public boolean removeIfExist(UUID uuid) {
+        if (contains(uuid)) {
+            remove(uuid);
+            return true;
+        }
+        return false;
     }
 
     public void clear() {
         cache.clear();
         save();
+        clearRequestedIds();
     }
 
     public boolean contains(UUID uuid) {
@@ -73,7 +80,6 @@ public class MerchantOfferCache {
 
     public void save() {
         if (!ModConfig.getCache().enabled) return;
-//        System.out.println("Saving cache");
         String name = getCurrentWorldName();
         if (name == null) {
             LOGGER.warn("Failed to get current world name");
@@ -98,13 +104,12 @@ public class MerchantOfferCache {
             CompoundTag oldCache;
             try {
                 oldCache = NbtIo.readCompressed(file);
+                oldCache.remove(name);
             } catch (IOException e) {
-//                System.out.println("Failed to read exist cache file");
                 oldCache = new CompoundTag();
             }
             oldCache.merge(root);
             NbtIo.writeCompressed(oldCache, file);
-//            System.out.println("Cache saved");
         } catch (IOException e) {
             LOGGER.error("Failed to save cache");
             System.out.println(e);
@@ -176,22 +181,19 @@ public class MerchantOfferCache {
         return cacheFile;
     }
 
-    public static void update(Minecraft mc) {
-        LocalPlayer player = mc.player;
-        MultiPlayerGameMode gameMode = mc.gameMode;
-        if (player != null && mc.level != null && gameMode != null) {
-            MerchantOfferCache cache = getInstance();
-            boolean tryInteract = ModConfig.getGeneric().alwaysAttemptToGetNearbyOffers;
-            mc.level.getEntities(player, player.getBoundingBox().inflate(gameMode.getPickRange())).forEach(entity -> {
-                UUID uuid = entity.getUUID();
-                if (cache.contains(uuid)) {
-                    if (entity.isRemoved() || !entity.isAlive()) {
-                        cache.remove(uuid);
-                    }
-                } else if (tryInteract && MerchantOfferUtils.isValidMerchant(entity)) {
-                    MerchantOfferUtils.tryInteract(entity);
-                }
-            });
-        }
+    public static void markRequested(Entity entity) {
+        REQUESTED_IDS.add(entity.getUUID());
+    }
+
+    public static void unmarkRequested(UUID uuid) {
+        REQUESTED_IDS.remove(uuid);
+    }
+
+    public static boolean isRequested(Entity entity) {
+        return REQUESTED_IDS.contains(entity.getUUID());
+    }
+
+    public static void clearRequestedIds() {
+        REQUESTED_IDS.clear();
     }
 }

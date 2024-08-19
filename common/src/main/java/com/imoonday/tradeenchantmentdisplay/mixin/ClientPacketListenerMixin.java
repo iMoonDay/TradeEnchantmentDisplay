@@ -1,9 +1,9 @@
 package com.imoonday.tradeenchantmentdisplay.mixin;
 
 import com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay;
-import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
 import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferCache;
 import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferInfo;
+import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.ClientboundMerchantOffersPacket;
@@ -30,7 +30,7 @@ public class ClientPacketListenerMixin {
     private void handleMerchantOffers(ClientboundMerchantOffersPacket packet, CallbackInfo ci) {
         MerchantOfferInfo.getInstance().setOffers(packet.getOffers());
         updateOrSetOffer();
-        if (!TradeEnchantmentDisplay.isTrading()) {
+        if (!TradeEnchantmentDisplay.isTrading() && MerchantOfferUtils.shouldRequestingOffers()) {
             ci.cancel();
         }
     }
@@ -55,7 +55,7 @@ public class ClientPacketListenerMixin {
 
     @Inject(at = @At("HEAD"), method = "handleOpenScreen", cancellable = true)
     public void onOpenScreen(ClientboundOpenScreenPacket packet, CallbackInfo ci) {
-        if (!ModConfig.getHud().enabled) return;
+        if (!MerchantOfferUtils.shouldRequestingOffers()) return;
         var type = packet.getType();
         if (!TradeEnchantmentDisplay.isTrading() && type == MenuType.MERCHANT) {
             ci.cancel();

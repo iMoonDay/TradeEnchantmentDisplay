@@ -1,12 +1,16 @@
 package com.imoonday.tradeenchantmentdisplay.fabric;
 
-import com.imoonday.tradeenchantmentdisplay.ModKeys;
 import com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay;
+import com.imoonday.tradeenchantmentdisplay.command.Command;
+import com.imoonday.tradeenchantmentdisplay.command.ModCommands;
+import com.imoonday.tradeenchantmentdisplay.keybinding.ModKeys;
 import com.imoonday.tradeenchantmentdisplay.renderer.EnchantmentRenderer;
-import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferCache;
-import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferInfo;
-import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferUtils;
+import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferHandler;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -14,32 +18,40 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.client.player.LocalPlayer;
 
 import java.util.List;
+
+import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
 public final class TradeEnchantmentDisplayFabric implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
         TradeEnchantmentDisplay.init();
+        registerKeys();
         HudRenderCallback.EVENT.register((guiGraphics, tickDelta) -> {
             EnchantmentRenderer.renderInHud(Minecraft.getInstance(), guiGraphics);
         });
         ClientTickEvents.END_WORLD_TICK.register(world -> {
-            MerchantOfferInfo.update();
+            MerchantOfferHandler.clientWorldTick();
         });
-        ClientTickEvents.END_CLIENT_TICK.register(MerchantOfferCache::update);
+        ClientTickEvents.END_CLIENT_TICK.register(MerchantOfferHandler::clientTick);
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-            MerchantOfferCache.getInstance().load();
+            MerchantOfferHandler.onJoined();
         });
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-            MerchantOfferCache cache = MerchantOfferCache.getInstance();
-            cache.save();
-            cache.clear();
+            MerchantOfferHandler.onDisconnected();
         });
-        registerKeys();
+        ClientEntityEvents.ENTITY_UNLOAD.register((entity, client) -> {
+            MerchantOfferHandler.onEntityRemoved(entity);
+        });
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            LiteralArgumentBuilder<FabricClientCommandSource> builder = literal(ModCommands.ROOT);
+            for (Command command : ModCommands.getCommands()) {
+                builder.then(literal(command.getName()).executes(context -> command.execute()));
+            }
+            dispatcher.register(builder);
+        });
     }
 
     private static void registerKeys() {

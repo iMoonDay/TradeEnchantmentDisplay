@@ -1,22 +1,23 @@
 package com.imoonday.tradeenchantmentdisplay.util;
 
+import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
 import com.imoonday.tradeenchantmentdisplay.renderer.EnchantmentRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.protocol.game.ServerboundInteractPacket;
-import net.minecraft.world.InteractionHand;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.phys.EntityHitResult;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 public class MerchantOfferUtils {
@@ -54,19 +55,14 @@ public class MerchantOfferUtils {
         return info.getOffers(offer -> !EnchantmentRenderer.shouldPass(offer.getResult(), onlyEnchantedBooks));
     }
 
-    public static void tryInteract(Entity entity) {
-        if (!isValidMerchant(entity)) return;
-        Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
+    public static boolean tryRequest(Entity entity) {
+        if (!isValidMerchant(entity)) return false;
         MerchantOfferInfo.getInstance().setId(entity.getId());
-        ClientPacketListener connection = mc.getConnection();
-        if (connection != null) {
-            connection.send(ServerboundInteractPacket.createInteractionPacket(entity, player.isShiftKeyDown(), InteractionHand.MAIN_HAND));
-        }
+        return MerchantOfferHandler.sendRequest((AbstractVillager) entity);
     }
 
     public static boolean isValidMerchant(Entity entity) {
-        if (MerchantOfferInfo.isWaiting()) return false;
+        if (MerchantOfferHandler.isWaiting()) return false;
         Minecraft mc = Minecraft.getInstance();
         MultiPlayerGameMode gameMode = mc.gameMode;
         if (gameMode == null) return false;
@@ -82,11 +78,26 @@ public class MerchantOfferUtils {
                 return false;
             }
             ItemStack stack = player.getMainHandItem();
-            if (stack.is(Items.VILLAGER_SPAWN_EGG) || stack.is(Items.NAME_TAG)) {
-                MerchantOfferInfo.startWaiting();
+            if (checkInteractableWithVillager(stack)) {
+                MerchantOfferHandler.startWaiting();
                 return false;
             }
         }
         return true;
+    }
+
+    public static boolean checkInteractableWithVillager(ItemStack stack) {
+        return ModConfig.getGeneric().nonInteractableItems
+                .stream()
+                .map(ResourceLocation::tryParse)
+                .filter(Objects::nonNull)
+                .map(BuiltInRegistries.ITEM::getOptional)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .anyMatch(stack::is);
+    }
+
+    public static boolean shouldRequestingOffers() {
+        return ModConfig.getHud().enabled || ModConfig.getMerchant().enabled;
     }
 }

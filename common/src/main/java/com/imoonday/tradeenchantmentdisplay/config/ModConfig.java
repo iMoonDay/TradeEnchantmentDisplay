@@ -1,11 +1,17 @@
 package com.imoonday.tradeenchantmentdisplay.config;
 
 import com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay;
+import com.imoonday.tradeenchantmentdisplay.renderer.EnchantmentRenderer;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.PartitioningSerializer;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Items;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Config(name = TradeEnchantmentDisplay.MOD_ID)
 public class ModConfig extends PartitioningSerializer.GlobalData {
@@ -57,6 +63,9 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
             if (duration < 0) {
                 throw new ValidationException("Duration must be greater than or equal to 0");
             }
+            if (pluralFormat.contains(EnchantmentRenderer.SIZE)) {
+                pluralFormat = pluralFormat.replace(EnchantmentRenderer.SIZE, EnchantmentRenderer.TOTAL);
+            }
         }
     }
 
@@ -86,12 +95,14 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public boolean enabled = true;
         public double renderDistance = 64.0;
         @ConfigEntry.BoundedDiscrete(max = 20 * 5)
+        @ConfigEntry.Gui.PrefixText
         public int duration = 40;
         public float offsetY = -0.5f;
         @ConfigEntry.ColorPicker
         public int nameColor = 0xFFAA00;
         @ConfigEntry.ColorPicker
         public int priceColor = 0x55FF55;
+        public List<String> enchantmentBlacklist = new ArrayList<>();
 
         @Override
         public void validatePostLoad() throws ValidationException {
@@ -103,7 +114,11 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
     @Config(name = "generic")
     public static class Generic implements ConfigData {
-        public boolean alwaysAttemptToGetNearbyOffers = false;
+        public boolean alwaysAttemptToGetNearbyOffers = true;
+        public List<String> nonInteractableItems = List.of(
+                BuiltInRegistries.ITEM.getKey(Items.VILLAGER_SPAWN_EGG).toString(),
+                BuiltInRegistries.ITEM.getKey(Items.NAME_TAG).toString()
+        );
     }
 
     @Config(name = "cache")

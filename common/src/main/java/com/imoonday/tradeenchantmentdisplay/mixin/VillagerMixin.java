@@ -28,11 +28,14 @@ public abstract class VillagerMixin extends AbstractVillager {
 
     private VillagerMixin(EntityType<? extends AbstractVillager> entityType, Level level) {
         super(entityType, level);
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
-        if (DATA_VILLAGER_DATA.equals(key)) {
+        if (level().isClientSide && DATA_VILLAGER_DATA.equals(key)) {
+            UUID uuid = getUUID();
+            MerchantOfferCache.unmarkRequested(uuid);
             MerchantOfferInfo info = MerchantOfferInfo.getInstance();
             int id = getId();
             if (info.hasId(id)) {
@@ -41,12 +44,9 @@ public abstract class VillagerMixin extends AbstractVillager {
             VillagerProfession profession = getVillagerData().getProfession();
             if (profession == VillagerProfession.NONE || profession == VillagerProfession.NITWIT) {
                 MerchantOfferCache cache = MerchantOfferCache.getInstance();
-                UUID uuid = getUUID();
-                if (cache.contains(uuid)) {
-                    cache.remove(uuid);
-                }
+                cache.removeIfExist(uuid);
             } else {
-                MerchantOfferUtils.tryInteract(this);
+                MerchantOfferUtils.tryRequest(this);
             }
         }
         super.onSyncedDataUpdated(key);

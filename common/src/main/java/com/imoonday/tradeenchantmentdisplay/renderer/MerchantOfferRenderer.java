@@ -1,7 +1,7 @@
 package com.imoonday.tradeenchantmentdisplay.renderer;
 
 import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
-import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferInfo;
+import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferHandler;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -67,22 +67,23 @@ public class MerchantOfferRenderer {
         itemY += 18;
         if (shouldRenderCostB(costA, costB, result)) {
             renderItem(costB, x, itemY);
-            itemY += 18;
+            itemY += 16;
         }
         y += 2;
-        int endX = x + 18;
+        int endX = x + 16;
         Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(result);
         for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
             Enchantment enchantment = entry.getKey();
             Integer level = entry.getValue();
             String name = enchantment.getFullname(level).getString();
-            guiGraphics.drawString(font, name, x + 20, y, fontColor);
+            guiGraphics.drawString(font, name, x + 16 + paddingX, y, fontColor);
             y += font.lineHeight + 2;
-            int lastX = x + 20 + font.width(name);
+            int lastX = x + 16 + paddingX + font.width(name);
             if (lastX > endX) {
                 endX = lastX;
             }
         }
+        y -= 2;
         int endY = Math.max(itemY, y);
         if (bgColor != 0) {
             poseStack.translate(0.0f, 0.0f, -100f);
@@ -100,7 +101,7 @@ public class MerchantOfferRenderer {
             poseStack.scale(scale, scale, 1.0f);
         }
         if (offers.isEmpty()) {
-            if (tipForNoEnchantment && MerchantOfferInfo.getValidMerchant(mc) != null) {
+            if (tipForNoEnchantment && MerchantOfferHandler.getValidMerchant(mc) != null) {
                 String text = I18n.get("text.tradeenchantmentdisplay.no_enchantment");
                 guiGraphics.fill(x - paddingX, y - paddingY, x + font.width(text) + paddingX, y + font.lineHeight + paddingY - 1, bgColor);
                 guiGraphics.drawString(font, text, x, y, fontColor);
@@ -108,14 +109,17 @@ public class MerchantOfferRenderer {
         } else {
             final int startY = y;
             int maxX = 0;
-            int height = mc.getWindow().getGuiScaledHeight();
+
+            int height = (int) ((mc.getWindow().getGuiScaledHeight() - paddingY) / scale);
+            int width = (int) ((mc.getWindow().getGuiScaledWidth() - paddingX) / scale);
             for (MerchantOffer offer : offers) {
                 if (!filter.test(offer)) continue;
                 Vec2 dimensions = calculateDimensions(offer, false);
-                if (y + dimensions.y + paddingY > height) {
+                if (dimensions.y + paddingY * 4 <= height && y + dimensions.y + paddingY > height) {
                     y = startY;
-                    x += maxX + paddingY * 3;
+                    x = maxX + paddingY * 3;
                 }
+                if (dimensions.x + paddingX * 4 <= width && x + dimensions.x + paddingX > width) break;
                 render(offer, x, y);
                 y += (int) dimensions.y + paddingY * 3;
                 maxX = Math.max(maxX, x + (int) dimensions.x);
@@ -139,21 +143,22 @@ public class MerchantOfferRenderer {
         ItemStack result = offer.getResult();
         int itemY = 21 + 18;
         if (shouldRenderCostB(costA, costB, result)) {
-            itemY += 18;
+            itemY += 16;
         }
         int y = 2;
-        int width = 18;
+        int width = 16;
         Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(result);
         for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
             Enchantment enchantment = entry.getKey();
             Integer level = entry.getValue();
             String name = enchantment.getFullname(level).getString();
             y += font.lineHeight + 2;
-            int nameWidth = 20 + font.width(name);
+            int nameWidth = 16 + paddingX + font.width(name);
             if (nameWidth > width) {
                 width = nameWidth;
             }
         }
+        y -= 2;
         int height = Math.max(itemY, y);
         if (includePadding) {
             width += paddingX * 2;
