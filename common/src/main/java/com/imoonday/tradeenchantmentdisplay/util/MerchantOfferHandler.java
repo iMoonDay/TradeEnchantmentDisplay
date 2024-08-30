@@ -47,7 +47,11 @@ public class MerchantOfferHandler {
     }
 
     public static void startWaiting() {
-        waitingTime = MAX_WAITING_TIME;
+        startWaiting(MAX_WAITING_TIME);
+    }
+
+    public static void startWaiting(int time) {
+        waitingTime = time;
     }
 
     public static void updateWaitingTime() {
@@ -93,7 +97,7 @@ public class MerchantOfferHandler {
                 for (Entity entity : entities) {
                     if (!cache.contains(entity.getUUID()) && MerchantOfferUtils.isValidMerchant(entity) && !MerchantOfferCache.isRequested(entity) && MerchantOfferUtils.tryRequest(entity)) {
                         MerchantOfferCache.markRequested(entity);
-                        startWaiting();
+                        startWaiting(5);
                         break;
                     }
                 }

@@ -91,7 +91,7 @@ public class MerchantOfferInfo {
         }
         int oldSize = oldOffers.size();
         if (oldSize > newSize) {
-            oldOffers.subList(newSize, oldOffers.size()).clear();
+            oldOffers.subList(newSize, oldSize).clear();
         }
         for (int i = 0; i < newSize; i++) {
             MerchantOffer newOffer = offers.get(i);
