@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "[48,)"
+loaderVersion = "[49,)"
 issueTrackerURL = "https://github.com/iMoonDay/TradeEnchantmentDisplay/issues"
 license = "MIT"
 clientSideOnly = true
@@ -16,7 +16,7 @@ displayURL = "https://modrinth.com/project/trade-enchantment-display"
 [[dependencies.tradeenchantmentdisplay]]
 modId = "forge"
 mandatory = true
-versionRange = "[48,)"
+versionRange = "[49,)"
 ordering = "NONE"
 side = "BOTH"
 

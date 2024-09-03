@@ -4,10 +4,7 @@ import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
 import com.imoonday.tradeenchantmentdisplay.mixin.MinecraftServerAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtIo;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.*;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.trading.MerchantOffer;
 import org.jetbrains.annotations.Nullable;
@@ -103,13 +100,13 @@ public class MerchantOfferCache {
             }
             CompoundTag oldCache;
             try {
-                oldCache = NbtIo.readCompressed(file);
+                oldCache = NbtIo.readCompressed(file.toPath(), NbtAccounter.unlimitedHeap());
                 oldCache.remove(name);
             } catch (IOException e) {
                 oldCache = new CompoundTag();
             }
             oldCache.merge(root);
-            NbtIo.writeCompressed(oldCache, file);
+            NbtIo.writeCompressed(oldCache, file.toPath());
         } catch (IOException e) {
             LOGGER.error("Failed to save cache");
             System.out.println(e);
@@ -131,7 +128,7 @@ public class MerchantOfferCache {
             return;
         }
         try {
-            root = NbtIo.readCompressed(file);
+            root = NbtIo.readCompressed(file.toPath(), NbtAccounter.unlimitedHeap());
         } catch (IOException e) {
             LOGGER.error("Failed to read cache file");
             System.out.println(e);
