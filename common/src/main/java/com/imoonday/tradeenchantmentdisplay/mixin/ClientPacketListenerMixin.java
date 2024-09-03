@@ -22,10 +22,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientPacketListener.class)
 public class ClientPacketListenerMixin {
 
-    @Shadow
-    @Final
-    private Minecraft minecraft;
-
     @Inject(method = "handleMerchantOffers", at = @At("HEAD"), cancellable = true)
     private void handleMerchantOffers(ClientboundMerchantOffersPacket packet, CallbackInfo ci) {
         MerchantOfferInfo.getInstance().setOffers(packet.getOffers());
@@ -38,6 +34,7 @@ public class ClientPacketListenerMixin {
     @Unique
     private void updateOrSetOffer() {
         MerchantOfferInfo.getInstance().getId().ifPresent(id -> {
+            Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.level != null) {
                 Entity entity = minecraft.level.getEntity(id);
                 if (entity != null) {
