@@ -8,7 +8,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,10 +18,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EntityRenderDispatcher.class)
 public abstract class EntityRenderDispatcherMixin {
-
-    @Shadow
-    @Final
-    private ItemRenderer itemRenderer;
 
     @Shadow
     @Final
@@ -38,7 +33,7 @@ public abstract class EntityRenderDispatcherMixin {
             MerchantOfferInfo info = cache.get(entity.getUUID());
             double renderDistance = ModConfig.getMerchant().renderDistance;
             if (info != null && distanceToSqr(entity) <= renderDistance * renderDistance) {
-                EnchantmentRenderer.renderUnderNameTag(entity, info, poseStack, buffer, itemRenderer, (EntityRenderDispatcher) (Object) this, font, packedLight);
+                EnchantmentRenderer.renderUnderNameTag(entity, info, poseStack, buffer, (EntityRenderDispatcher) (Object) this, font, packedLight);
             }
         }
     }

@@ -8,6 +8,7 @@ import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 import me.shedaniel.autoconfig.serializer.PartitioningSerializer;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
@@ -47,6 +48,8 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public int fontScale = 85;
         @ConfigEntry.ColorPicker
         public int fontColor = 0xFFFFFF;
+        @ConfigEntry.Gui.CollapsibleObject
+        public FontColorForMaxLevel fontColorForMaxLevel = new FontColorForMaxLevel();
         @ConfigEntry.ColorPicker(allowAlpha = true)
         public int bgColor = 0x00000000;
         @ConfigEntry.BoundedDiscrete(max = 20 * 5)
@@ -80,6 +83,8 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public int scale = 100;
         @ConfigEntry.ColorPicker
         public int fontColor = 0xFFFFFF;
+        @ConfigEntry.Gui.CollapsibleObject
+        public FontColorForMaxLevel fontColorForMaxLevel = new FontColorForMaxLevel();
         @ConfigEntry.ColorPicker(allowAlpha = true)
         public int dividerColor = 0x50FFFFFF;
         @ConfigEntry.ColorPicker(allowAlpha = true)
@@ -100,6 +105,8 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public float offsetY = -0.5f;
         @ConfigEntry.ColorPicker
         public int nameColor = 0xFFAA00;
+        @ConfigEntry.Gui.CollapsibleObject
+        public FontColorForMaxLevel nameColorForMaxLevel = new FontColorForMaxLevel().withColor(0xFF5500);
         @ConfigEntry.ColorPicker
         public int priceColor = 0x55FF55;
         public List<String> enchantmentBlacklist = new ArrayList<>();
@@ -115,6 +122,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
     @Config(name = "generic")
     public static class Generic implements ConfigData {
         public boolean alwaysAttemptToGetNearbyOffers = true;
+        public int requestFrequency = 5;
         public List<String> nonInteractableItems = List.of(
                 BuiltInRegistries.ITEM.getKey(Items.VILLAGER_SPAWN_EGG).toString(),
                 BuiltInRegistries.ITEM.getKey(Items.NAME_TAG).toString()
@@ -126,6 +134,54 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
         public boolean enabled = true;
         public String filePath = "trades.nbt";
         public boolean distinguishPortBetweenServers = false;
+    }
+
+    public static class FontColorForMaxLevel {
+        public boolean enabled = true;
+        @ConfigEntry.ColorPicker
+        public int color = 0xFFD700;
+        public boolean bold = true;
+        public boolean italic = false;
+        public boolean underline = false;
+        public boolean ignoreSingleLevel = true;
+
+        public MutableComponent format(MutableComponent component) {
+            return component.setStyle(component.getStyle().withColor(color).withBold(bold).withItalic(italic).withUnderlined(underline));
+        }
+
+        public boolean shouldFormat(int level, int maxLevel) {
+            return enabled && level >= maxLevel && (!ignoreSingleLevel || maxLevel > 1 || level > 1);
+        }
+
+        public FontColorForMaxLevel withEnabled(boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public FontColorForMaxLevel withColor(int color) {
+            this.color = color;
+            return this;
+        }
+
+        public FontColorForMaxLevel withBold(boolean bold) {
+            this.bold = bold;
+            return this;
+        }
+
+        public FontColorForMaxLevel withItalic(boolean italic) {
+            this.italic = italic;
+            return this;
+        }
+
+        public FontColorForMaxLevel withUnderline(boolean underline) {
+            this.underline = underline;
+            return this;
+        }
+
+        public FontColorForMaxLevel withIgnoreSingleLevel(boolean ignoreSingleLevel) {
+            this.ignoreSingleLevel = ignoreSingleLevel;
+            return this;
+        }
     }
 
     public static ModConfig get() {

@@ -94,10 +94,11 @@ public class MerchantOfferHandler {
                 MerchantOfferCache cache = MerchantOfferCache.getInstance();
                 List<Entity> entities = mc.level.getEntities(player, player.getBoundingBox().inflate(gameMode.getPickRange()));
                 entities.sort(Comparator.comparingDouble(e -> e.distanceTo(player)));
+                int cooldown = ModConfig.getGeneric().requestFrequency;
                 for (Entity entity : entities) {
                     if (!cache.contains(entity.getUUID()) && MerchantOfferUtils.isValidMerchant(entity) && !MerchantOfferCache.isRequested(entity) && MerchantOfferUtils.tryRequest(entity)) {
                         MerchantOfferCache.markRequested(entity);
-                        startWaiting(5);
+                        startWaiting(cooldown);
                         break;
                     }
                 }

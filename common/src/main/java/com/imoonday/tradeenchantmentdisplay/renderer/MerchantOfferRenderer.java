@@ -8,6 +8,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -25,6 +28,7 @@ public class MerchantOfferRenderer {
     private final GuiGraphics guiGraphics;
     private final Font font;
     private int fontColor;
+    private ModConfig.FontColorForMaxLevel fontColorForMaxLevel = new ModConfig.FontColorForMaxLevel();
     private int bgColor;
     private int dividerColor;
     private int paddingX;
@@ -41,6 +45,7 @@ public class MerchantOfferRenderer {
     public MerchantOfferRenderer(Minecraft mc, GuiGraphics guiGraphics, ModConfig.Hud settings) {
         this(mc, guiGraphics, mc.font);
         this.fontColor = settings.fontColor;
+        this.fontColorForMaxLevel = settings.fontColorForMaxLevel;
         this.bgColor = settings.bgColor;
         this.dividerColor = settings.dividerColor;
         this.paddingX = settings.paddingX;
@@ -75,8 +80,13 @@ public class MerchantOfferRenderer {
         for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
             Enchantment enchantment = entry.getKey();
             Integer level = entry.getValue();
-            String name = enchantment.getFullname(level).getString();
-            guiGraphics.drawString(font, name, x + 16 + paddingX, y, fontColor);
+            MutableComponent name = enchantment.getFullname(level).copy().setStyle(Style.EMPTY.withColor(fontColor));
+            if (fontColorForMaxLevel.shouldFormat(level, enchantment.getMaxLevel())) {
+                name = fontColorForMaxLevel.format(name);
+            }
+            TextColor textColor = name.getStyle().getColor();
+            int color = textColor != null ? textColor.getValue() : fontColor;
+            guiGraphics.drawString(font, name, x + 16 + paddingX, y, color);
             y += font.lineHeight + 2;
             int lastX = x + 16 + paddingX + font.width(name);
             if (lastX > endX) {
@@ -232,6 +242,14 @@ public class MerchantOfferRenderer {
 
     public void setTipVisibility(boolean visible) {
         this.tipForNoEnchantment = visible;
+    }
+
+    public ModConfig.FontColorForMaxLevel getFontColorForMaxLevel() {
+        return fontColorForMaxLevel;
+    }
+
+    public void setFontColorForMaxLevel(ModConfig.FontColorForMaxLevel fontColorForMaxLevel) {
+        this.fontColorForMaxLevel = fontColorForMaxLevel;
     }
 }
 

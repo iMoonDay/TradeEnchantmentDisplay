@@ -9,9 +9,12 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
@@ -48,7 +51,7 @@ public class EnchantmentRenderer {
                 settings.duration = 0;
                 ModConfig.save();
             }
-            String text = generateText(entries, drawTick);
+            Component text = generateText(entries, drawTick);
             PoseStack poseStack = guiGraphics.pose();
             poseStack.pushPose();
             if (settings.displayOnTop) {
@@ -65,21 +68,23 @@ public class EnchantmentRenderer {
         }
     }
 
-    private static void drawTextWithBackground(GuiGraphics guiGraphics, Font font, String text, int x, int y, ModConfig.Screen settings) {
+    private static void drawTextWithBackground(GuiGraphics guiGraphics, Font font, Component text, int x, int y, ModConfig.Screen settings) {
+        TextColor textColor = text.getStyle().getColor();
+        int color = textColor != null ? textColor.getValue() : settings.fontColor;
         if (settings.xAxisCentered) {
             if (settings.bgColor != 0) {
                 guiGraphics.fill(x - font.width(text) / 2 - 2, y - 2, x + font.width(text) / 2 + 2, y + font.lineHeight + 1, settings.bgColor);
             }
-            guiGraphics.drawCenteredString(font, text, x, y, settings.fontColor);
+            guiGraphics.drawCenteredString(font, text, x, y, color);
         } else {
             if (settings.bgColor != 0) {
                 guiGraphics.fill(x - 2, y - 2, x + font.width(text) + 2, y + font.lineHeight + 1, settings.bgColor);
             }
-            guiGraphics.drawString(font, text, x, y, settings.fontColor);
+            guiGraphics.drawString(font, text, x, y, color);
         }
     }
 
-    private static String generateText(List<Map.Entry<Enchantment, Integer>> entries, int drawTick) {
+    private static Component generateText(List<Map.Entry<Enchantment, Integer>> entries, int drawTick) {
         int size = entries.size();
         ModConfig.Screen settings = config.screen;
         int index = settings.duration == 0 ? 0 : drawTick / settings.duration % size;
@@ -88,14 +93,21 @@ public class EnchantmentRenderer {
         String fullName = enchantment.getFullname(level).getString();
         String name = I18n.get(enchantment.getDescriptionId());
         String levelText = "";
-        if (level != 1 || enchantment.getMaxLevel() != 1) {
+        int maxLevel = enchantment.getMaxLevel();
+        if (level != 1 || maxLevel != 1) {
             levelText = I18n.get("enchantment.level." + level);
         }
-        String text;
+        MutableComponent text;
         if (size > 1) {
-            text = settings.pluralFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText).replace(INDEX, String.valueOf(index + 1)).replace(TOTAL, String.valueOf(size)).replace(SIZE, String.valueOf(size));
+            text = Component.literal(settings.pluralFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText).replace(INDEX, String.valueOf(index + 1)).replace(TOTAL, String.valueOf(size)).replace(SIZE, String.valueOf(size)));
         } else {
-            text = settings.singularFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText);
+            text = Component.literal(settings.singularFormat.replace(FULL_NAME, fullName).replace(NAME, name).replace(LEVEL, levelText));
+        }
+        ModConfig.FontColorForMaxLevel accentColor = settings.fontColorForMaxLevel;
+        if (accentColor.shouldFormat(level, maxLevel)) {
+            text = accentColor.format(text);
+        } else {
+            text = text.withStyle(text.getStyle().withColor(settings.fontColor));
         }
         return text;
     }
@@ -114,7 +126,7 @@ public class EnchantmentRenderer {
         return !stack.is(Items.ENCHANTED_BOOK) && (onlyEnchantedBooks || !stack.isEnchanted());
     }
 
-    public static void renderUnderNameTag(Entity entity, MerchantOfferInfo info, PoseStack poseStack, MultiBufferSource buffer, ItemRenderer itemRenderer, EntityRenderDispatcher dispatcher, Font font, int packedLight) {
+    public static void renderUnderNameTag(Entity entity, MerchantOfferInfo info, PoseStack poseStack, MultiBufferSource buffer, EntityRenderDispatcher dispatcher, Font font, int packedLight) {
         if (!initializeConfigAndCheck()) return;
         ModConfig.Merchant settings = config.merchant;
         if (!settings.enabled) return;
@@ -144,11 +156,17 @@ public class EnchantmentRenderer {
         for (Map.Entry<Enchantment, Integer> entry : entries) {
             Enchantment enchantment = entry.getKey();
             Integer level = entry.getValue();
-            String name = enchantment.getFullname(level).getString();
+            MutableComponent name = enchantment.getFullname(level).copy().setStyle(Style.EMPTY.withColor(nameColor));
+            ModConfig.FontColorForMaxLevel accentColor = settings.nameColorForMaxLevel;
+            if (accentColor.shouldFormat(level, enchantment.getMaxLevel())) {
+                name = accentColor.format(name);
+            }
+            TextColor textColor = name.getStyle().getColor();
+            int color = textColor != null ? textColor.getValue() : nameColor;
             float x = -(font.width(name) + 4 + font.width(price)) / 2f;
-            font.drawInBatch(name, x, y, nameColor, false, matrix4f, buffer, !discrete ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL, bgColor, packedLight);
+            font.drawInBatch(name, x, y, color, false, matrix4f, buffer, !discrete ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL, bgColor, packedLight);
             if (!discrete) {
-                font.drawInBatch(name, x, y, nameColor, false, matrix4f, buffer, Font.DisplayMode.NORMAL, 0, packedLight);
+                font.drawInBatch(name, x, y, color, false, matrix4f, buffer, Font.DisplayMode.NORMAL, 0, packedLight);
             }
             x += font.width(name) + 4;
             font.drawInBatch(price, x, y, priceColor, false, matrix4f, buffer, !discrete ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL, bgColor, packedLight);
