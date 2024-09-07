@@ -1,3 +1,7 @@
+### v1.1.1
+
+1. Optimize code to be compatible with lower versions
+
 ### v1.1.0
 
 1. New Settings
@@ -25,6 +29,10 @@
       heads.
 
 ---
+
+### v1.1.1
+
+1. 优化代码以兼容低版本
 
 ### v1.1.0
 
