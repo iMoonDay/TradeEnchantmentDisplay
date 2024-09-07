@@ -75,10 +75,7 @@ public class MerchantOfferRenderer {
         for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
             Enchantment enchantment = entry.getKey();
             Integer level = entry.getValue();
-            MutableComponent name = enchantment.getFullname(level).copy().setStyle(Style.EMPTY.withColor(fontColor));
-            if (fontColorForMaxLevel.shouldFormat(level, enchantment.getMaxLevel())) {
-                name = fontColorForMaxLevel.format(name);
-            }
+            MutableComponent name = getFormattedName(enchantment, level);
             TextColor textColor = name.getStyle().getColor();
             int color = textColor != null ? textColor.getValue() : fontColor;
             Screen.drawString(poseStack, font, name, x + 16 + paddingX, y, color);
@@ -155,7 +152,7 @@ public class MerchantOfferRenderer {
         for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
             Enchantment enchantment = entry.getKey();
             Integer level = entry.getValue();
-            String name = enchantment.getFullname(level).getString();
+            MutableComponent name = getFormattedName(enchantment, level);
             y += font.lineHeight + 2;
             int nameWidth = 16 + paddingX + font.width(name);
             if (nameWidth > width) {
@@ -169,6 +166,14 @@ public class MerchantOfferRenderer {
             height += paddingY * 2;
         }
         return new Vector2i(width, height);
+    }
+
+    public MutableComponent getFormattedName(Enchantment enchantment, int level) {
+        MutableComponent name = enchantment.getFullname(level).copy().setStyle(Style.EMPTY.withColor(fontColor));
+        if (fontColorForMaxLevel.shouldFormat(level, enchantment.getMaxLevel())) {
+            name = fontColorForMaxLevel.format(name);
+        }
+        return name;
     }
 
     public void setColors(int fontColor, int bgColor, int dividerColor) {
