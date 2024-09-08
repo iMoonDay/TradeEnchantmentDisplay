@@ -4,9 +4,13 @@
   "compatibilityLevel": "JAVA_8",
   "minVersion": "0.8",
   "client": [
-    "MerchantScreenMixin"
-  ],
-  "mixins": [
+    "ClientPacketListenerMixin",
+    "EntityRenderDispatcherMixin",
+    "LocalPlayerMixin",
+    "MerchantScreenMixin",
+    "MinecraftServerAccessor",
+    "MultiPlayerGameModeMixin",
+    "VillagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -7,8 +7,9 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod(TradeEnchantmentDisplay.MOD_ID)
 public final class TradeEnchantmentDisplayForge {
+
     public TradeEnchantmentDisplayForge() {
-        TradeEnchantmentDisplay.init();
-        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> ConfigScreenRegistry::register);
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> TradeEnchantmentDisplay::init);
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> EventHandler::register);
     }
 }
