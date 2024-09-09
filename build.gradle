@@ -58,6 +58,16 @@ subprojects {
         it.options.release = 17
     }
 
+    tasks.withType(Jar).configureEach {
+        destinationDirectory = file("${buildDir}/libs/${rootProject.mod_version}/${rootProject.minecraft_version}/${project.name}")
+    }
+
+    ["remapSourcesJar", "remapJar"].each { taskName ->
+        tasks.named(taskName).configure {
+            destinationDirectory = file("${buildDir}/libs/${rootProject.mod_version}/${rootProject.minecraft_version}/${project.name}")
+        }
+    }
+
     // Configure Maven publishing.
     publishing {
         publications {
