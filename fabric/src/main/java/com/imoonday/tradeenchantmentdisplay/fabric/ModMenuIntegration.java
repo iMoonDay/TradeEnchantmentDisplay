@@ -1,6 +1,6 @@
 package com.imoonday.tradeenchantmentdisplay.fabric;
 
-import com.imoonday.tradeenchantmentdisplay.ModConfig;
+import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import me.shedaniel.autoconfig.AutoConfig;

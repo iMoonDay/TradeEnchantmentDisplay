@@ -26,6 +26,10 @@ configurations {
 
 repositories {
     maven { url "https://maven.terraformersmc.com/releases/" }
+    maven {
+        url "https://maven.nucleoid.xyz/"
+        name "Nucleoid"
+    }
 }
 
 dependencies {
@@ -40,10 +44,10 @@ dependencies {
 }
 
 processResources {
-    inputs.property 'version', project.version
+    inputs.property 'version', rootProject.mod_version
 
     filesMatching('fabric.mod.json') {
-        expand version: project.version
+        expand version: rootProject.mod_version
     }
 }
 

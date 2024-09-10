@@ -1,5 +1,5 @@
 plugins {
-    id 'dev.architectury.loom' version '1.6-SNAPSHOT' apply false
+    id 'dev.architectury.loom' version '1.7-SNAPSHOT' apply false
     id 'architectury-plugin' version '3.4-SNAPSHOT'
     id 'com.github.johnrengelman.shadow' version '8.1.1' apply false
 }
@@ -56,6 +56,16 @@ subprojects {
 
     tasks.withType(JavaCompile).configureEach {
         it.options.release = 21
+    }
+
+    tasks.withType(Jar).configureEach {
+        destinationDirectory = file("${buildDir}/libs/${rootProject.mod_version}/${rootProject.minecraft_version}/${project.name}")
+    }
+
+    ["remapSourcesJar", "remapJar"].each { taskName ->
+        tasks.named(taskName).configure {
+            destinationDirectory = file("${buildDir}/libs/${rootProject.mod_version}/${rootProject.minecraft_version}/${project.name}")
+        }
     }
 
     // Configure Maven publishing.
