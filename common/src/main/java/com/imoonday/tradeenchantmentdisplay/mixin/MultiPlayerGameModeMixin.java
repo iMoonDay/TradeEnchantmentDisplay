@@ -1,7 +1,7 @@
 package com.imoonday.tradeenchantmentdisplay.mixin;
 
-import com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay;
 import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferInfo;
+import com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;

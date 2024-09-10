@@ -64,13 +64,11 @@ public class MerchantOfferUtils {
     public static boolean isValidMerchant(Entity entity) {
         if (MerchantOfferHandler.isWaiting()) return false;
         Minecraft mc = Minecraft.getInstance();
-        MultiPlayerGameMode gameMode = mc.gameMode;
-        if (gameMode == null) return false;
         LocalPlayer player = mc.player;
         if (player == null) return false;
         if (!(entity instanceof AbstractVillager merchant)) return false;
         double distanceSqr = entity.getBoundingBox().distanceToSqr(player.getEyePosition());
-        float range = gameMode.getPickRange();
+        double range = player.entityInteractionRange();
         if (distanceSqr > range * range) return false;
         if (merchant instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().getProfession();

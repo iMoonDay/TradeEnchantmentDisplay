@@ -2,11 +2,16 @@ package com.imoonday.tradeenchantmentdisplay.util;
 
 import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
 import com.imoonday.tradeenchantmentdisplay.mixin.MinecraftServerAccessor;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.MerchantOffers;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -76,6 +81,8 @@ public class MerchantOfferCache {
     }
 
     public void save() {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
         if (!ModConfig.getCache().enabled) return;
         String name = getCurrentWorldName();
         if (name == null) {
@@ -83,13 +90,7 @@ public class MerchantOfferCache {
             return;
         }
         CompoundTag uuids = new CompoundTag();
-        cache.forEach((uuid, info) -> {
-            ListTag offers = new ListTag();
-            for (MerchantOffer offer : info.getOffers()) {
-                offers.add(offer.createTag());
-            }
-            uuids.put(uuid.toString(), offers);
-        });
+        cache.forEach((uuid, info) -> uuids.put(uuid.toString(), MerchantOffers.CODEC.encodeStart(level.registryAccess().createSerializationContext(NbtOps.INSTANCE), info.createOffers()).getOrThrow()));
         CompoundTag root = new CompoundTag();
         root.put(name, uuids);
         try {
@@ -114,6 +115,8 @@ public class MerchantOfferCache {
     }
 
     public void load() {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) return;
         if (!ModConfig.getCache().enabled) return;
         LOGGER.info("Loading cache");
         String name = getCurrentWorldName();
@@ -140,10 +143,11 @@ public class MerchantOfferCache {
         }
         CompoundTag uuids = root.getCompound(name);
         uuids.getAllKeys().forEach(key -> {
-            ListTag offers = uuids.getList(key, Tag.TAG_COMPOUND);
-            List<MerchantOffer> list = offers.stream().map(tag -> new MerchantOffer((CompoundTag) tag)).toList();
-            MerchantOfferInfo info = new MerchantOfferInfo(list);
-            cache.put(UUID.fromString(key), info);
+            CompoundTag offers = uuids.getCompound(key);
+            MerchantOffers.CODEC.parse(level.registryAccess().createSerializationContext(NbtOps.INSTANCE), offers).resultOrPartial(Util.prefix("Failed to load offers: ", LOGGER::warn)).ifPresent(merchantOffers -> {
+                MerchantOfferInfo info = new MerchantOfferInfo(merchantOffers);
+                cache.put(UUID.fromString(key), info);
+            });
         });
         LOGGER.info("Cache loaded");
     }

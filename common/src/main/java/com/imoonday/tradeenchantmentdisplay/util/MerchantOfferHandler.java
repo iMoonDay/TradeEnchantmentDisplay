@@ -87,12 +87,11 @@ public class MerchantOfferHandler {
 
     public static void clientTick(Minecraft mc) {
         LocalPlayer player = mc.player;
-        MultiPlayerGameMode gameMode = mc.gameMode;
-        if (player != null && mc.level != null && gameMode != null) {
+        if (player != null && mc.level != null) {
             boolean tryInteract = ModConfig.getGeneric().alwaysAttemptToGetNearbyOffers && MerchantOfferUtils.shouldRequestingOffers();
             if (tryInteract) {
                 MerchantOfferCache cache = MerchantOfferCache.getInstance();
-                List<Entity> entities = mc.level.getEntities(player, player.getBoundingBox().inflate(gameMode.getPickRange()));
+                List<Entity> entities = mc.level.getEntities(player, player.getBoundingBox().inflate(player.entityInteractionRange()));
                 entities.sort(Comparator.comparingDouble(e -> e.distanceTo(player)));
                 int cooldown = ModConfig.getGeneric().requestFrequency;
                 for (Entity entity : entities) {

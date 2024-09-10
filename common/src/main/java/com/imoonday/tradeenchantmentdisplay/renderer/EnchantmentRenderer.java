@@ -4,12 +4,14 @@ import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
 import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferInfo;
 import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferUtils;
 import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -17,15 +19,17 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityAttachment;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -45,7 +49,7 @@ public class EnchantmentRenderer {
         ModConfig.Screen settings = config.screen;
         if (!settings.enabled) return;
         if (shouldPass(stack, settings.onlyEnchantedBooks)) return;
-        List<Map.Entry<Enchantment, Integer>> entries = EnchantmentHelper.getEnchantments(stack).entrySet().stream().toList();
+        List<Object2IntMap.Entry<Holder<Enchantment>>> entries = EnchantmentHelper.getEnchantmentsForCrafting(stack).entrySet().stream().toList();
         if (!entries.isEmpty()) {
             if (settings.duration < 0) {
                 settings.duration = 0;
@@ -84,12 +88,13 @@ public class EnchantmentRenderer {
         }
     }
 
-    private static Component generateText(List<Map.Entry<Enchantment, Integer>> entries, int drawTick) {
+    private static Component generateText(List<Object2IntMap.Entry<Holder<Enchantment>>> entries, int drawTick) {
         int size = entries.size();
         ModConfig.Screen settings = config.screen;
         int index = settings.duration == 0 ? 0 : drawTick / settings.duration % size;
-        Enchantment enchantment = entries.get(index).getKey();
-        int level = entries.get(index).getValue();
+        Holder<Enchantment> holder = entries.get(index).getKey();
+        Enchantment enchantment = holder.value();
+        int level = entries.get(index).getIntValue();
         String fullName = enchantment.getFullname(level).getString();
         String name = I18n.get(enchantment.getDescriptionId());
         String levelText = "";
@@ -126,17 +131,20 @@ public class EnchantmentRenderer {
         return !stack.is(Items.ENCHANTED_BOOK) && (onlyEnchantedBooks || !stack.isEnchanted());
     }
 
-    public static void renderUnderNameTag(Entity entity, MerchantOfferInfo info, PoseStack poseStack, MultiBufferSource buffer, EntityRenderDispatcher dispatcher, Font font, int packedLight) {
+    public static void renderUnderNameTag(Entity entity, MerchantOfferInfo info, PoseStack poseStack, MultiBufferSource buffer, EntityRenderDispatcher dispatcher, Font font, int packedLight, float partialTick) {
         if (!initializeConfigAndCheck()) return;
         ModConfig.Merchant settings = config.merchant;
         if (!settings.enabled) return;
         List<MerchantOffer> offers = info.getOffers(offer -> isStandardEnchantedBookTrade(offer) && checkBlackList(offer));
         if (offers.isEmpty()) return;
         boolean discrete = entity.isDiscrete();
-        float offsetY = entity.getNameTagOffsetY() + settings.offsetY;
+        Vec3 vec3 = entity.getAttachments().getNullable(EntityAttachment.NAME_TAG, 0, entity.getViewYRot(partialTick));
+        if (vec3 == null) {
+            vec3 = new Vec3(0.0, entity.getEyeHeight(), 0.0);
+        }
         int y = "deadmau5".equals(entity.getDisplayName().getString()) ? -10 : 0;
         poseStack.pushPose();
-        poseStack.translate(0.0f, offsetY, 0.0f);
+        poseStack.translate(vec3.x, vec3.y + 0.5 + settings.offsetY, vec3.z);
         poseStack.mulPose(dispatcher.cameraOrientation());
         poseStack.scale(-0.025f, -0.025f, 0.025f);
         Matrix4f matrix4f = poseStack.last().pose();
@@ -149,13 +157,13 @@ public class EnchantmentRenderer {
         int duration = settings.duration;
         MerchantOffer offer = offers.get(duration == 0 ? 0 : entity.tickCount / duration % offers.size());
         ItemStack stack = offer.getResult();
-        Set<Map.Entry<Enchantment, Integer>> entries = EnchantmentHelper.getEnchantments(stack).entrySet();
+        Set<Object2IntMap.Entry<Holder<Enchantment>>> entries = EnchantmentHelper.getEnchantmentsForCrafting(stack).entrySet();
         int nameColor = settings.nameColor;
         String price = String.valueOf(offer.getCostA().getCount());
         int priceColor = settings.priceColor;
-        for (Map.Entry<Enchantment, Integer> entry : entries) {
-            Enchantment enchantment = entry.getKey();
-            Integer level = entry.getValue();
+        for (Object2IntMap.Entry<Holder<Enchantment>> entry : entries) {
+            Enchantment enchantment = entry.getKey().value();
+            int level = entry.getIntValue();
             MutableComponent name = enchantment.getFullname(level).copy().setStyle(Style.EMPTY.withColor(nameColor));
             ModConfig.FontColorForMaxLevel accentColor = settings.nameColorForMaxLevel;
             if (accentColor.shouldFormat(level, enchantment.getMaxLevel())) {
@@ -181,9 +189,9 @@ public class EnchantmentRenderer {
     public static boolean checkBlackList(MerchantOffer offer) {
         List<String> list = config.merchant.enchantmentBlacklist;
         if (list.isEmpty()) return true;
-        Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(offer.getResult());
-        for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
-            Enchantment enchantment = entry.getKey();
+        ItemEnchantments enchantments = EnchantmentHelper.getEnchantmentsForCrafting(offer.getResult());
+        for (Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
+            Enchantment enchantment = entry.getKey().value();
             ResourceLocation key = BuiltInRegistries.ENCHANTMENT.getKey(enchantment);
             if (key == null) continue;
             boolean anyMatch = list.stream().anyMatch(s -> {
@@ -191,7 +199,7 @@ public class EnchantmentRenderer {
                     Pattern pattern = Pattern.compile(s);
                     return pattern.matcher(key.toString()).matches() ||
                             pattern.matcher(I18n.get(enchantment.getDescriptionId())).matches() ||
-                            pattern.matcher(enchantment.getFullname(entry.getValue()).getString()).matches();
+                            pattern.matcher(enchantment.getFullname(entry.getIntValue()).getString()).matches();
                 } catch (PatternSyntaxException e) {
                     return false;
                 }

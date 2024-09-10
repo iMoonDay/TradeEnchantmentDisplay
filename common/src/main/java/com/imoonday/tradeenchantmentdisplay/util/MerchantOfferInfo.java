@@ -2,6 +2,7 @@ package com.imoonday.tradeenchantmentdisplay.util;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.item.trading.MerchantOffers;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -36,6 +37,12 @@ public class MerchantOfferInfo {
 
     public List<MerchantOffer> getOffers(Predicate<MerchantOffer> predicate) {
         return offers.stream().filter(predicate).toList();
+    }
+
+    public MerchantOffers createOffers() {
+        MerchantOffers merchantOffers = new MerchantOffers();
+        merchantOffers.addAll(offers);
+        return merchantOffers.copy();
     }
 
     public void setOffers(List<MerchantOffer> offers) {

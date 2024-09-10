@@ -33,7 +33,7 @@ public abstract class EntityRenderDispatcherMixin {
             MerchantOfferInfo info = cache.get(entity.getUUID());
             double renderDistance = ModConfig.getMerchant().renderDistance;
             if (info != null && distanceToSqr(entity) <= renderDistance * renderDistance) {
-                EnchantmentRenderer.renderUnderNameTag(entity, info, poseStack, buffer, (EntityRenderDispatcher) (Object) this, font, packedLight);
+                EnchantmentRenderer.renderUnderNameTag(entity, info, poseStack, buffer, (EntityRenderDispatcher) (Object) this, font, packedLight, partialTicks);
             }
         }
     }
