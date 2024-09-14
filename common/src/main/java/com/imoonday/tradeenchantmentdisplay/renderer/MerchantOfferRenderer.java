@@ -75,9 +75,9 @@ public class MerchantOfferRenderer {
         int endX = x + 16;
         ItemEnchantments enchantments = EnchantmentHelper.getEnchantmentsForCrafting(result);
         for (Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
-            Enchantment enchantment = entry.getKey().value();
+            Holder<Enchantment> holder = entry.getKey();
             int level = entry.getIntValue();
-            MutableComponent name = getFormattedName(enchantment, level);
+            MutableComponent name = getFormattedName(holder, level);
             TextColor textColor = name.getStyle().getColor();
             int color = textColor != null ? textColor.getValue() : fontColor;
             guiGraphics.drawString(font, name, x + 16 + paddingX, y, color);
@@ -152,9 +152,9 @@ public class MerchantOfferRenderer {
         int width = 16;
         ItemEnchantments enchantments = EnchantmentHelper.getEnchantmentsForCrafting(result);
         for (Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
-            Enchantment enchantment = entry.getKey().value();
+            Holder<Enchantment> holder = entry.getKey();
             int level = entry.getIntValue();
-            MutableComponent name = getFormattedName(enchantment, level);
+            MutableComponent name = getFormattedName(holder, level);
             y += font.lineHeight + 2;
             int nameWidth = 16 + paddingX + font.width(name);
             if (nameWidth > width) {
@@ -170,9 +170,9 @@ public class MerchantOfferRenderer {
         return new Vector2i(width, height);
     }
 
-    public MutableComponent getFormattedName(Enchantment enchantment, int level) {
-        MutableComponent name = enchantment.getFullname(level).copy().setStyle(Style.EMPTY.withColor(fontColor));
-        if (fontColorForMaxLevel.shouldFormat(level, enchantment.getMaxLevel())) {
+    public MutableComponent getFormattedName(Holder<Enchantment> holder, int level) {
+        MutableComponent name = Enchantment.getFullname(holder, level).copy().setStyle(Style.EMPTY.withColor(fontColor));
+        if (fontColorForMaxLevel.shouldFormat(level, holder.value().getMaxLevel())) {
             name = fontColorForMaxLevel.format(name);
         }
         return name;

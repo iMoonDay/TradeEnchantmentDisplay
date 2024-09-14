@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -26,6 +26,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
@@ -95,8 +96,8 @@ public class EnchantmentRenderer {
         Holder<Enchantment> holder = entries.get(index).getKey();
         Enchantment enchantment = holder.value();
         int level = entries.get(index).getIntValue();
-        String fullName = enchantment.getFullname(level).getString();
-        String name = I18n.get(enchantment.getDescriptionId());
+        String fullName = Enchantment.getFullname(holder, level).getString();
+        String name = enchantment.description().getString();
         String levelText = "";
         int maxLevel = enchantment.getMaxLevel();
         if (level != 1 || maxLevel != 1) {
@@ -135,7 +136,7 @@ public class EnchantmentRenderer {
         if (!initializeConfigAndCheck()) return;
         ModConfig.Merchant settings = config.merchant;
         if (!settings.enabled) return;
-        List<MerchantOffer> offers = info.getOffers(offer -> isStandardEnchantedBookTrade(offer) && checkBlackList(offer));
+        List<MerchantOffer> offers = info.getOffers(offer -> isStandardEnchantedBookTrade(offer) && checkBlackList(entity.level(), offer));
         if (offers.isEmpty()) return;
         boolean discrete = entity.isDiscrete();
         Vec3 vec3 = entity.getAttachments().getNullable(EntityAttachment.NAME_TAG, 0, entity.getViewYRot(partialTick));
@@ -162,9 +163,10 @@ public class EnchantmentRenderer {
         String price = String.valueOf(offer.getCostA().getCount());
         int priceColor = settings.priceColor;
         for (Object2IntMap.Entry<Holder<Enchantment>> entry : entries) {
-            Enchantment enchantment = entry.getKey().value();
+            Holder<Enchantment> holder = entry.getKey();
+            Enchantment enchantment = holder.value();
             int level = entry.getIntValue();
-            MutableComponent name = enchantment.getFullname(level).copy().setStyle(Style.EMPTY.withColor(nameColor));
+            MutableComponent name = Enchantment.getFullname(holder, level).copy().setStyle(Style.EMPTY.withColor(nameColor));
             ModConfig.FontColorForMaxLevel accentColor = settings.nameColorForMaxLevel;
             if (accentColor.shouldFormat(level, enchantment.getMaxLevel())) {
                 name = accentColor.format(name);
@@ -186,20 +188,22 @@ public class EnchantmentRenderer {
         poseStack.popPose();
     }
 
-    public static boolean checkBlackList(MerchantOffer offer) {
+    public static boolean checkBlackList(Level level, MerchantOffer offer) {
         List<String> list = config.merchant.enchantmentBlacklist;
         if (list.isEmpty()) return true;
         ItemEnchantments enchantments = EnchantmentHelper.getEnchantmentsForCrafting(offer.getResult());
         for (Object2IntMap.Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
-            Enchantment enchantment = entry.getKey().value();
-            ResourceLocation key = BuiltInRegistries.ENCHANTMENT.getKey(enchantment);
+            Holder<Enchantment> holder = entry.getKey();
+            Enchantment enchantment = holder.value();
+            int enchLevel = entry.getIntValue();
+            ResourceLocation key = level.registryAccess().registry(Registries.ENCHANTMENT).map(registry -> registry.getKey(enchantment)).orElse(null);
             if (key == null) continue;
             boolean anyMatch = list.stream().anyMatch(s -> {
                 try {
                     Pattern pattern = Pattern.compile(s);
                     return pattern.matcher(key.toString()).matches() ||
-                            pattern.matcher(I18n.get(enchantment.getDescriptionId())).matches() ||
-                            pattern.matcher(enchantment.getFullname(entry.getIntValue()).getString()).matches();
+                            pattern.matcher(enchantment.description().getString()).matches() ||
+                            pattern.matcher(Enchantment.getFullname(holder, enchLevel).getString()).matches();
                 } catch (PatternSyntaxException e) {
                     return false;
                 }

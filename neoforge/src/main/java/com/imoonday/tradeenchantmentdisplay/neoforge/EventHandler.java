@@ -12,8 +12,10 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.model.EntityModel;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
@@ -34,7 +36,7 @@ public class EventHandler {
             };
         });
         ModLoadingContext.get().getActiveContainer().getEventBus().<RegisterGuiLayersEvent>addListener(e -> {
-            e.registerAboveAll(new ResourceLocation(TradeEnchantmentDisplay.MOD_ID, "enchantments"), (guiGraphics, partialTick) -> {
+            e.registerAboveAll(ResourceLocation.fromNamespaceAndPath(TradeEnchantmentDisplay.MOD_ID, "enchantments"), (guiGraphics, partialTick) -> {
                 EnchantmentRenderer.renderInHud(Minecraft.getInstance(), guiGraphics);
             });
         });
