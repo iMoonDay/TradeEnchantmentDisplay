@@ -129,7 +129,7 @@ public class EnchantmentRenderer {
         if (!initializeConfigAndCheck()) return;
         ModConfig.Merchant settings = config.merchant;
         if (!settings.enabled) return;
-        List<MerchantOffer> offers = info.getOffers(offer -> isStandardEnchantedBookTrade(offer) && checkBlackList(offer));
+        List<MerchantOffer> offers = info.getOffers(offer -> offer.getResult().is(Items.ENCHANTED_BOOK) && checkBlackList(offer));
         if (offers.isEmpty()) return;
         boolean discrete = entity.isDiscrete();
         float offsetY = entity.getBbHeight() + settings.offsetY;
@@ -150,6 +150,7 @@ public class EnchantmentRenderer {
         ItemStack stack = offer.getResult();
         Set<Map.Entry<Enchantment, Integer>> entries = EnchantmentHelper.getEnchantments(stack).entrySet();
         int nameColor = settings.nameColor;
+        boolean showPrice = isStandardEnchantedBookTrade(offer);
         String price = String.valueOf(offer.getCostA().getCount());
         int priceColor = settings.priceColor;
         for (Map.Entry<Enchantment, Integer> entry : entries) {
@@ -162,15 +163,17 @@ public class EnchantmentRenderer {
             }
             TextColor textColor = name.getStyle().getColor();
             int color = textColor != null ? textColor.getValue() : nameColor;
-            float x = -(font.width(name) + 4 + font.width(price)) / 2f;
+            float x = -(font.width(name) + (showPrice ? 4 + font.width(price) : 0)) / 2f;
             font.drawInBatch(name, x, y, color, false, matrix4f, buffer, !discrete, bgColor, packedLight);
             if (!discrete) {
                 font.drawInBatch(name, x, y, color, false, matrix4f, buffer, false, 0, packedLight);
             }
             x += font.width(name) + 4;
-            font.drawInBatch(price, x, y, priceColor, false, matrix4f, buffer, !discrete, bgColor, packedLight);
-            if (!discrete) {
-                font.drawInBatch(price, x, y, priceColor, false, matrix4f, buffer, false, 0, packedLight);
+            if (showPrice) {
+                font.drawInBatch(price, x, y, priceColor, false, matrix4f, buffer, !discrete, bgColor, packedLight);
+                if (!discrete) {
+                    font.drawInBatch(price, x, y, priceColor, false, matrix4f, buffer, false, 0, packedLight);
+                }
             }
             poseStack.translate(0.0f, font.lineHeight + 2, 0.0f);
         }
@@ -189,8 +192,8 @@ public class EnchantmentRenderer {
                 try {
                     Pattern pattern = Pattern.compile(s);
                     return pattern.matcher(key.toString()).matches() ||
-                            pattern.matcher(I18n.get(enchantment.getDescriptionId())).matches() ||
-                            pattern.matcher(enchantment.getFullname(entry.getValue()).getString()).matches();
+                           pattern.matcher(I18n.get(enchantment.getDescriptionId())).matches() ||
+                           pattern.matcher(enchantment.getFullname(entry.getValue()).getString()).matches();
                 } catch (PatternSyntaxException e) {
                     return false;
                 }
