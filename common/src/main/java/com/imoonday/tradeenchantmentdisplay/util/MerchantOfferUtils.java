@@ -8,10 +8,10 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.phys.EntityHitResult;
 
@@ -26,13 +26,12 @@ public class MerchantOfferUtils {
         EntityHitResult hitResult = (EntityHitResult) mc.hitResult;
 
         Entity entity = hitResult.getEntity();
-        if (entity instanceof AbstractVillager) {
-            AbstractVillager merchant = (AbstractVillager) entity;
-            UUID uuid = merchant.getUUID();
+        if (entity instanceof Merchant) {
+            UUID uuid = entity.getUUID();
             MerchantOfferCache cache = MerchantOfferCache.getInstance();
             MerchantOfferInfo info = cache.get(uuid);
-            if (info != null && merchant instanceof Villager) {
-                Villager villager = (Villager) merchant;
+            if (info != null && entity instanceof Villager) {
+                Villager villager = (Villager) entity;
                 VillagerProfession profession = villager.getVillagerData().getProfession();
                 if (profession == VillagerProfession.NONE || profession == VillagerProfession.NITWIT) {
                     cache.remove(uuid);
@@ -58,7 +57,7 @@ public class MerchantOfferUtils {
     public static boolean tryRequest(Entity entity) {
         if (!isValidMerchant(entity)) return false;
         MerchantOfferInfo.getInstance().setId(entity.getId());
-        return MerchantOfferHandler.sendRequest((AbstractVillager) entity);
+        return MerchantOfferHandler.sendRequest(entity);
     }
 
     public static boolean isValidMerchant(Entity entity) {
@@ -68,13 +67,12 @@ public class MerchantOfferUtils {
         if (gameMode == null) return false;
         LocalPlayer player = mc.player;
         if (player == null) return false;
-        if (!(entity instanceof AbstractVillager)) return false;
-        AbstractVillager merchant = (AbstractVillager) entity;
+        if (!(entity instanceof Merchant)) return false;
         double distanceSqr = entity.getBoundingBox().getCenter().distanceToSqr(player.getEyePosition(1.0f));
         float range = gameMode.getPickRange();
         if (distanceSqr > range * range) return false;
-        if (merchant instanceof Villager) {
-            Villager villager = (Villager) merchant;
+        if (entity instanceof Villager) {
+            Villager villager = (Villager) entity;
             VillagerProfession profession = villager.getVillagerData().getProfession();
             if (profession == VillagerProfession.NONE || profession == VillagerProfession.NITWIT) {
                 return false;
