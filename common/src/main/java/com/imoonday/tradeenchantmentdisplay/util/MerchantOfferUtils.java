@@ -3,15 +3,14 @@ package com.imoonday.tradeenchantmentdisplay.util;
 import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
 import com.imoonday.tradeenchantmentdisplay.renderer.EnchantmentRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.phys.EntityHitResult;
 
@@ -28,11 +27,11 @@ public class MerchantOfferUtils {
         }
 
         Entity entity = hitResult.getEntity();
-        if (entity instanceof AbstractVillager merchant) {
-            UUID uuid = merchant.getUUID();
+        if (entity instanceof Merchant) {
+            UUID uuid = entity.getUUID();
             MerchantOfferCache cache = MerchantOfferCache.getInstance();
             MerchantOfferInfo info = cache.get(uuid);
-            if (info != null && merchant instanceof Villager villager) {
+            if (info != null && entity instanceof Villager villager) {
                 VillagerProfession profession = villager.getVillagerData().getProfession();
                 if (profession == VillagerProfession.NONE || profession == VillagerProfession.NITWIT) {
                     cache.remove(uuid);
@@ -58,7 +57,7 @@ public class MerchantOfferUtils {
     public static boolean tryRequest(Entity entity) {
         if (!isValidMerchant(entity)) return false;
         MerchantOfferInfo.getInstance().setId(entity.getId());
-        return MerchantOfferHandler.sendRequest((AbstractVillager) entity);
+        return MerchantOfferHandler.sendRequest(entity);
     }
 
     public static boolean isValidMerchant(Entity entity) {
@@ -66,11 +65,11 @@ public class MerchantOfferUtils {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null) return false;
-        if (!(entity instanceof AbstractVillager merchant)) return false;
+        if (!(entity instanceof Merchant)) return false;
         double distanceSqr = entity.getBoundingBox().distanceToSqr(player.getEyePosition());
         double range = player.entityInteractionRange();
         if (distanceSqr > range * range) return false;
-        if (merchant instanceof Villager villager) {
+        if (entity instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().getProfession();
             if (profession == VillagerProfession.NONE || profession == VillagerProfession.NITWIT) {
                 return false;

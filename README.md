@@ -27,6 +27,8 @@ If the trade information is successfully obtained, all enchanting trades will be
   Additionally, when sneaking (Shift), pressing the hotkey toggles the visibility of enchantments above merchants’
   heads.
 
+### Open the Config Screen (J)
+
 ## 简介
 
 当与村民交易时，会自动在附魔书或者附魔物品上方显示其附魔，按顺序循环切换。
@@ -52,6 +54,8 @@ If the trade information is successfully obtained, all enchanting trades will be
 
 - 当在交易界面时，切换交易界面的附魔显示的启用状态。
 - 当在游戏界面时(即无任何界面)，切换游戏屏幕上附魔显示的启用状态。同时，当处于潜行状态时(Shift)，切换商人头顶附魔显示的启用状态。
+
+### 打开配置界面(J)
 
 ## 截图
 

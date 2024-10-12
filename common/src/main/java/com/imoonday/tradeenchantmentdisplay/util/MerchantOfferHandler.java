@@ -4,15 +4,14 @@ import com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay;
 import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 
@@ -25,12 +24,12 @@ public class MerchantOfferHandler {
     public static final int MAX_WAITING_TIME = 10;
     private static int waitingTime = 0;
 
-    public static void clientWorldTick() {
+    public static <T extends Entity & Merchant> void clientWorldTick() {
         updateWaitingTime();
         if (!MerchantOfferUtils.shouldRequestingOffers()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen != null) return;
-        AbstractVillager merchant = getValidMerchant(mc);
+        T merchant = getValidMerchant(mc);
         MerchantOfferInfo info = MerchantOfferInfo.getInstance();
         if (merchant != null && !isWaiting()) {
             if (info.hasId(merchant.getId())) return;
@@ -60,7 +59,8 @@ public class MerchantOfferHandler {
         }
     }
 
-    public static AbstractVillager getValidMerchant(Minecraft mc) {
+    @SuppressWarnings("unchecked")
+    public static <T extends Entity & Merchant> T getValidMerchant(Minecraft mc) {
         if (mc == null) return null;
         LocalPlayer player = mc.player;
         if (player == null) return null;
@@ -70,8 +70,8 @@ public class MerchantOfferHandler {
             return null;
         }
         Entity entity = entityHitResult.getEntity();
-        if (!(entity instanceof AbstractVillager merchant)) return null;
-        if (merchant instanceof Villager villager) {
+        if (!(entity instanceof Merchant merchant)) return null;
+        if (entity instanceof Villager villager) {
             VillagerProfession profession = villager.getVillagerData().getProfession();
             if (profession == VillagerProfession.NONE || profession == VillagerProfession.NITWIT) {
                 return null;
@@ -82,7 +82,7 @@ public class MerchantOfferHandler {
                 return null;
             }
         }
-        return merchant;
+        return (T) merchant;
     }
 
     public static void clientTick(Minecraft mc) {
@@ -105,21 +105,21 @@ public class MerchantOfferHandler {
         }
     }
 
-    public static void onEntityRemoved(Entity entity) {
-        if (!(entity instanceof AbstractVillager)) return;
-        if (entity.isAlive()) return;
-        MerchantOfferCache cache = MerchantOfferCache.getInstance();
-        UUID uuid = entity.getUUID();
-        cache.removeIfExist(uuid);
-    }
-
-    public static boolean sendRequest(AbstractVillager merchant) {
+    public static boolean sendRequest(Entity merchant) {
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
         if (connection != null) {
             connection.send(ServerboundInteractPacket.createInteractionPacket(merchant, Minecraft.getInstance().player.isShiftKeyDown(), InteractionHand.MAIN_HAND));
             return true;
         }
         return false;
+    }
+
+    public static void onEntityRemoved(Entity entity) {
+        if (!(entity instanceof Merchant)) return;
+        if (entity.isAlive()) return;
+        MerchantOfferCache cache = MerchantOfferCache.getInstance();
+        UUID uuid = entity.getUUID();
+        cache.removeIfExist(uuid);
     }
 
     public static void onJoined() {
