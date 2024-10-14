@@ -2,6 +2,7 @@ package com.imoonday.tradeenchantmentdisplay.mixin;
 
 import com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay;
 import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferCache;
+import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferHandler;
 import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferInfo;
 import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferUtils;
 import net.minecraft.client.Minecraft;
@@ -24,7 +25,7 @@ public class ClientPacketListenerMixin {
     private void handleMerchantOffers(ClientboundMerchantOffersPacket packet, CallbackInfo ci) {
         MerchantOfferInfo.getInstance().setOffers(packet.getOffers());
         updateOrSetOffer();
-        if (!TradeEnchantmentDisplay.isTrading() && MerchantOfferUtils.shouldRequestingOffers()) {
+        if (!TradeEnchantmentDisplay.isTrading() && MerchantOfferUtils.shouldRequestingOffers() && MerchantOfferHandler.receiveRequest()) {
             ci.cancel();
         }
     }
@@ -52,7 +53,7 @@ public class ClientPacketListenerMixin {
     public void onOpenScreen(ClientboundOpenScreenPacket packet, CallbackInfo ci) {
         if (!MerchantOfferUtils.shouldRequestingOffers()) return;
         var type = packet.getType();
-        if (!TradeEnchantmentDisplay.isTrading() && type == MenuType.MERCHANT) {
+        if (!TradeEnchantmentDisplay.isTrading() && MerchantOfferHandler.isRequesting() && type == MenuType.MERCHANT) {
             ci.cancel();
             Minecraft.getInstance().getConnection().send(new ServerboundContainerClosePacket(packet.getContainerId()));
         }
