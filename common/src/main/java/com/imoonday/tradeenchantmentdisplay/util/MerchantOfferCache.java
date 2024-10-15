@@ -111,8 +111,7 @@ public class MerchantOfferCache {
             oldCache.merge(root);
             NbtIo.writeCompressed(oldCache, file);
         } catch (IOException e) {
-            LOGGER.error("Failed to save cache");
-            System.out.println(e);
+            LOGGER.error("Failed to save cache", e);
         }
     }
 
@@ -133,8 +132,7 @@ public class MerchantOfferCache {
         try {
             root = NbtIo.readCompressed(file);
         } catch (IOException e) {
-            LOGGER.error("Failed to read cache file");
-            System.out.println(e);
+            LOGGER.error("Failed to read cache file", e);
             return;
         }
         if (!root.contains(name)) {
