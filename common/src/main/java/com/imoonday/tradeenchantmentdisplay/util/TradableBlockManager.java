@@ -48,7 +48,7 @@ public final class TradableBlockManager {
 
         }
         Block block = state.getBlock();
-        String path = BuiltInRegistries.BLOCK.getKey(block).getPath();
-        return ModConfig.getGeneric().tradableBlocks.stream().anyMatch(path::equals) ? TradableBlock.TRUE : TRADABLE_BLOCKS.getOrDefault(block, TradableBlock.FALSE);
+        String id = BuiltInRegistries.BLOCK.getKey(block).toString();
+        return ModConfig.getGeneric().tradableBlocks.stream().anyMatch(id::equals) ? TradableBlock.TRUE : TRADABLE_BLOCKS.getOrDefault(block, TradableBlock.FALSE);
     }
 }
