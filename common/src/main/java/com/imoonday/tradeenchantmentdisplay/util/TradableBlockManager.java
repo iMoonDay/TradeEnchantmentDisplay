@@ -1,7 +1,6 @@
 package com.imoonday.tradeenchantmentdisplay.util;
 
 import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
-import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.MenuProvider;
@@ -12,14 +11,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class TradableBlockManager {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Map<Block, TradableBlock> TRADABLE_BLOCKS = new ConcurrentHashMap<>();
 
     public static void addTradableBlock(Block block, TradableBlock tradableBlock) {
