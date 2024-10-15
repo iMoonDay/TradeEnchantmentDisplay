@@ -30,20 +30,6 @@ configurations {
     }
 }
 
-repositories {
-    exclusiveContent {
-        forRepository {
-            maven {
-                name = "Modrinth"
-                url = "https://api.modrinth.com/maven"
-            }
-        }
-        filter {
-            includeGroup "maven.modrinth"
-        }
-    }
-}
-
 dependencies {
     forge "net.minecraftforge:forge:$rootProject.forge_version"
 
@@ -51,7 +37,6 @@ dependencies {
     shadowBundle project(path: ':common', configuration: 'transformProductionForge')
 
     modApi "me.shedaniel.cloth:cloth-config-forge:${rootProject.cloth_config_version}"
-    modImplementation "maven.modrinth:easy-villagers:forge-1.20.1-1.1.23"
 }
 
 processResources {
