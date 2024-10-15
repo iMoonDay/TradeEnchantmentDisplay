@@ -37,12 +37,12 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
     @ConfigEntry.Gui.TransitiveObject
     public Cache cache = new Cache();
 
-    public static ModConfig get() {
-        return AutoConfig.getConfigHolder(ModConfig.class).get();
-    }
-
     public static Screen getScreen() {
         return get().screen;
+    }
+
+    public static ModConfig get() {
+        return AutoConfig.getConfigHolder(ModConfig.class).get();
     }
 
     public static Hud getHud() {
@@ -67,6 +67,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
     @Config(name = "screen")
     public static class Screen implements ConfigData {
+
         public boolean enabled = true;
         public boolean onlyEnchantedBooks = false;
         public int offsetX = 82;
@@ -102,6 +103,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
     @Config(name = "hud")
     public static class Hud implements ConfigData {
+
         public boolean enabled = true;
         public boolean onlyEnchantedBooks = false;
         public boolean tipForNoEnchantment = true;
@@ -125,6 +127,7 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
     @Config(name = "merchant")
     public static class Merchant implements ConfigData {
+
         public boolean enabled = true;
         public double renderDistance = 64.0;
         @ConfigEntry.BoundedDiscrete(max = 20 * 5)
@@ -149,22 +152,29 @@ public class ModConfig extends PartitioningSerializer.GlobalData {
 
     @Config(name = "generic")
     public static class Generic implements ConfigData {
+
         public boolean alwaysAttemptToGetNearbyOffers = true;
         public int requestFrequency = 5;
-        public List<String> nonInteractableItems = List.of(
+        public List<String> nonInteractableItems = new ArrayList<>(List.of(
                 Registry.ITEM.getKey(Items.VILLAGER_SPAWN_EGG).toString(),
                 Registry.ITEM.getKey(Items.NAME_TAG).toString()
-        );
+        ));
+        @ConfigEntry.Gui.Tooltip
+        public List<String> tradableBlocks = new ArrayList<>(List.of(
+                "easy_villagers:trader"
+        ));
     }
 
     @Config(name = "cache")
     public static class Cache implements ConfigData {
+
         public boolean enabled = true;
         public String filePath = "trades.nbt";
         public boolean distinguishPortBetweenServers = false;
     }
 
     public static class FontColorForMaxLevel {
+
         public boolean enabled = true;
         @ConfigEntry.ColorPicker
         public int color = 0xFFD700;
