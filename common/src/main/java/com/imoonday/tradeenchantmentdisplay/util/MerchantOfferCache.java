@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static com.imoonday.tradeenchantmentdisplay.TradeEnchantmentDisplay.LOGGER;
@@ -157,8 +158,7 @@ public class MerchantOfferCache {
             oldCache.merge(root);
             NbtIo.writeCompressed(oldCache, file);
         } catch (IOException e) {
-            LOGGER.severe("Failed to save cache");
-            System.out.println(e);
+            LOGGER.log(Level.SEVERE, "Failed to save cache", e);
         }
     }
 
@@ -179,8 +179,7 @@ public class MerchantOfferCache {
         try {
             root = NbtIo.readCompressed(file);
         } catch (IOException e) {
-            LOGGER.severe("Failed to read cache file");
-            System.out.println(e);
+            LOGGER.log(Level.SEVERE, "Failed to read cache file", e);
             return;
         }
         if (!root.contains(name)) {
