@@ -17,6 +17,8 @@
   "text.autoconfig.tradeenchantmentdisplay.option.generic.alwaysAttemptToGetNearbyOffers": "Always attempt to get nearby offers",
   "text.autoconfig.tradeenchantmentdisplay.option.generic.nonInteractableItems": "Items that cannot be interacted with by villagers",
   "text.autoconfig.tradeenchantmentdisplay.option.generic.requestFrequency": "Request frequency (Tick)",
+  "text.autoconfig.tradeenchantmentdisplay.option.generic.tradableBlocks": "Blocks that can be interacted with to trade",
+  "text.autoconfig.tradeenchantmentdisplay.option.generic.tradableBlocks.@Tooltip": "If you are unable to open the trading screen for a trader block, try adding it to this list for compatibility",
   "text.autoconfig.tradeenchantmentdisplay.option.hud.bgColor": "Background color",
   "text.autoconfig.tradeenchantmentdisplay.option.hud.dividerColor": "Divider color",
   "text.autoconfig.tradeenchantmentdisplay.option.hud.enabled": "Enabled",

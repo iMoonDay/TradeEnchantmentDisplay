@@ -2,7 +2,6 @@ package com.imoonday.tradeenchantmentdisplay.util;
 
 import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
 import com.imoonday.tradeenchantmentdisplay.renderer.EnchantmentRenderer;
-import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.player.LocalPlayer;
@@ -14,9 +13,7 @@ import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.item.trading.MerchantOffer;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,25 +23,16 @@ import java.util.UUID;
 public class MerchantOfferUtils {
 
     public static List<MerchantOffer> getMerchantOffers(Minecraft mc, boolean onlyEnchantedBooks) {
-        HitResult result = mc.hitResult;
-        if (result == null || result.getType() == EntityHitResult.Type.MISS) return List.of();
-        Merchant merchant = null;
-        UUID uuid = null;
-        if (result instanceof EntityHitResult hitResult) {
-            Entity entity = hitResult.getEntity();
-            if (entity instanceof Merchant m) {
-                merchant = m;
-                uuid = entity.getUUID();
-            }
-        } else if (result instanceof BlockHitResult hitResult) {
-            Pair<Merchant, UUID> pair = MerchantProvider.getMerchant(mc.level, hitResult.getBlockPos());
-            merchant = pair.getFirst();
-            uuid = pair.getSecond();
+        if (!(mc.hitResult instanceof EntityHitResult hitResult) || hitResult.getType() == EntityHitResult.Type.MISS) {
+            return List.of();
         }
-        if (merchant != null && uuid != null) {
+
+        Entity entity = hitResult.getEntity();
+        if (entity instanceof Merchant) {
+            UUID uuid = entity.getUUID();
             MerchantOfferCache cache = MerchantOfferCache.getInstance();
             MerchantOfferInfo info = cache.get(uuid);
-            if (info != null && merchant instanceof Villager villager) {
+            if (info != null && entity instanceof Villager villager) {
                 VillagerProfession profession = villager.getVillagerData().getProfession();
                 if (profession == VillagerProfession.NONE || profession == VillagerProfession.NITWIT) {
                     cache.remove(uuid);

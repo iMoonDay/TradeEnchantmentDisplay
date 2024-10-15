@@ -17,6 +17,8 @@
   "text.autoconfig.tradeenchantmentdisplay.option.generic.alwaysAttemptToGetNearbyOffers": "始终尝试获取附近的交易信息",
   "text.autoconfig.tradeenchantmentdisplay.option.generic.nonInteractableItems": "不可交互村民的物品",
   "text.autoconfig.tradeenchantmentdisplay.option.generic.requestFrequency": "请求频率 (Tick)",
+  "text.autoconfig.tradeenchantmentdisplay.option.generic.tradableBlocks": "可以交互以进行交易的方块",
+  "text.autoconfig.tradeenchantmentdisplay.option.generic.tradableBlocks.@Tooltip": "如果你无法打开某个商人方块的交易界面，尝试将其添加到此列表以进行兼容",
   "text.autoconfig.tradeenchantmentdisplay.option.hud.bgColor": "背景颜色",
   "text.autoconfig.tradeenchantmentdisplay.option.hud.dividerColor": "分隔线颜色",
   "text.autoconfig.tradeenchantmentdisplay.option.hud.enabled": "启用",

@@ -1,7 +1,6 @@
 package com.imoonday.tradeenchantmentdisplay;
 
 import com.imoonday.tradeenchantmentdisplay.config.ModConfig;
-import com.imoonday.tradeenchantmentdisplay.util.MerchantOfferHandler;
 import com.mojang.logging.LogUtils;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
@@ -24,8 +23,5 @@ public final class TradeEnchantmentDisplay {
 
     public static void setTrading(boolean trading) {
         TradeEnchantmentDisplay.trading = trading;
-        if (trading) {
-            MerchantOfferHandler.stopRequesting();
-        }
     }
 }

@@ -23,7 +23,6 @@ import java.util.UUID;
 public class MerchantOfferHandler {
 
     public static final int MAX_WAITING_TIME = 10;
-    private static boolean requesting = false;
     private static int waitingTime = 0;
 
     public static <T extends Entity & Merchant> void clientWorldTick() {
@@ -108,27 +107,10 @@ public class MerchantOfferHandler {
         }
     }
 
-    public static boolean isRequesting() {
-        return requesting;
-    }
-
-    public static boolean receiveRequest() {
-        if (requesting) {
-            requesting = false;
-            return true;
-        }
-        return false;
-    }
-
-    public static void stopRequesting() {
-        requesting = false;
-    }
-
     public static boolean sendRequest(Entity merchant) {
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
         if (connection != null) {
             connection.send(ServerboundInteractPacket.createInteractionPacket(merchant, Minecraft.getInstance().player.isShiftKeyDown(), InteractionHand.MAIN_HAND));
-            requesting = true;
             return true;
         }
         return false;
