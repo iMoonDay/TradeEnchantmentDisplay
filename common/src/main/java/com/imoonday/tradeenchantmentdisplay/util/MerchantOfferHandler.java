@@ -94,12 +94,13 @@ public class MerchantOfferHandler {
         LocalPlayer player = mc.player;
         MultiPlayerGameMode gameMode = mc.gameMode;
         if (player != null && mc.level != null && gameMode != null) {
-            boolean tryInteract = ModConfig.getGeneric().alwaysAttemptToGetNearbyOffers && MerchantOfferUtils.shouldRequestingOffers();
+            ModConfig.Generic generic = ModConfig.getGeneric();
+            boolean tryInteract = generic.alwaysAttemptToGetNearbyOffers && MerchantOfferUtils.shouldRequestingOffers();
             if (tryInteract) {
                 MerchantOfferCache cache = MerchantOfferCache.getInstance();
                 List<Entity> entities = mc.level.getEntities(player, player.getBoundingBox().inflate(gameMode.getPickRange()));
                 entities.sort(Comparator.comparingDouble(e -> e.distanceTo(player)));
-                int cooldown = ModConfig.getGeneric().requestFrequency;
+                int cooldown = generic.requestFrequency;
                 for (Entity entity : entities) {
                     if (!cache.contains(entity.getUUID()) && MerchantOfferUtils.isValidMerchant(entity) && !MerchantOfferCache.isRequested(entity) && MerchantOfferUtils.tryRequest(entity)) {
                         MerchantOfferCache.markRequested(entity);

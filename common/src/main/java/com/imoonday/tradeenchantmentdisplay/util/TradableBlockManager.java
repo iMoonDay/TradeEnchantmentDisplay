@@ -41,7 +41,7 @@ public final class TradableBlockManager {
                     return TradableBlock.TRUE;
                 }
             }
-        } catch (UnsupportedOperationException ignored) {
+        } catch (Exception ignored) {
 
         }
         Block block = state.getBlock();
