@@ -202,8 +202,8 @@ public class EnchantmentRenderer {
                 try {
                     Pattern pattern = Pattern.compile(s);
                     return pattern.matcher(key.toString()).matches() ||
-                            pattern.matcher(enchantment.description().getString()).matches() ||
-                            pattern.matcher(Enchantment.getFullname(holder, enchLevel).getString()).matches();
+                           pattern.matcher(enchantment.description().getString()).matches() ||
+                           pattern.matcher(Enchantment.getFullname(holder, enchLevel).getString()).matches();
                 } catch (PatternSyntaxException e) {
                     return false;
                 }
