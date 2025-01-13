@@ -25,16 +25,116 @@ public class MerchantOfferCache {
     private static final Set<UUID> REQUESTED_IDS = new HashSet<>();
     private static File cacheFile;
     private final Map<UUID, MerchantOfferInfo> cache = new HashMap<>();
+    private static final long DEBOUNCE_DELAY = 1000;
+    private static int errorCount = 0;
+    private Timer timer;
 
     public static MerchantOfferCache getInstance() {
         return INSTANCE;
     }
 
+    public MerchantOfferInfo get(UUID uuid) {
+        return cache.get(uuid);
+    }
+
+    public MerchantOfferInfo get(int id) {
+        return cache.values().stream().filter(info -> info.hasId(id)).findFirst().orElse(null);
+    }
+
+    public boolean set(UUID uuid, MerchantOfferInfo info) {
+        boolean contains = cache.containsKey(uuid);
+        cache.put(uuid, info);
+        saveWithDebounce();
+        return contains;
+    }
+
+    public void remove(UUID uuid) {
+        cache.remove(uuid);
+        saveWithDebounce();
+        unmarkRequested(uuid);
+    }
+
+    public boolean removeIfExist(UUID uuid) {
+        if (contains(uuid)) {
+            remove(uuid);
+            return true;
+        }
+        return false;
+    }
+
+    public void saveWithDebounce() {
+        if (timer != null) {
+            timer.cancel();
+        }
+
+        timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                save();
+            }
+        }, DEBOUNCE_DELAY);
+    }
+
+    public boolean contains(UUID uuid) {
+        return cache.containsKey(uuid);
+    }
+
+    public void save() {
+        try {
+            if (!ModConfig.getCache().enabled) return;
+            String name = getCurrentWorldName();
+            if (name == null) return;
+
+            CompoundTag uuids = new CompoundTag();
+            cache.forEach((uuid, info) -> {
+                ListTag offers = new ListTag();
+                for (MerchantOffer offer : info.getOffers()) {
+                    offers.add(offer.createTag());
+                }
+                uuids.put(uuid.toString(), offers);
+            });
+            CompoundTag root = new CompoundTag();
+            root.put(name, uuids);
+            try {
+                File file = getCacheFile();
+                if (!file.exists() && !file.createNewFile()) {
+                    LOGGER.warning("Failed to create cache file");
+                    return;
+                }
+                CompoundTag oldCache;
+                try {
+                    oldCache = NbtIo.readCompressed(file);
+                    oldCache.remove(name);
+                } catch (IOException e) {
+                    oldCache = new CompoundTag();
+                }
+                oldCache.merge(root);
+                NbtIo.writeCompressed(oldCache, file);
+                errorCount = 0;
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Failed to save cache", e);
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error while saving cache, stopping saving. If this error persist, please try to delete cache file " + getCacheFile() + " and report this issue", e);
+            handleError();
+        }
+    }
+
+    private static void handleError() {
+        if (++errorCount > 10) {
+            errorCount = 0;
+            LOGGER.log(Level.SEVERE, "Too many errors while saving or loading cache, disabling cache");
+            ModConfig.getCache().enabled = false;
+            ModConfig.save();
+        }
+    }
+
     @Nullable
     public static String getCurrentWorldName() {
         String name = null;
-        Minecraft mc = Minecraft.getInstance();
         try {
+            Minecraft mc = Minecraft.getInstance();
             if (mc.hasSingleplayerServer()) {
                 name = ((MinecraftServerAccessor) mc.getSingleplayerServer()).getStorageSource().getLevelId();
             } else {
@@ -44,7 +144,7 @@ public class MerchantOfferCache {
                 }
             }
         } catch (Exception e) {
-            return null;
+            LOGGER.log(Level.WARNING, "Failed to get current world name", e);
         }
         return name;
     }
@@ -60,139 +160,85 @@ public class MerchantOfferCache {
         return cacheFile;
     }
 
-    public static void markRequested(Entity entity) {
-        REQUESTED_IDS.add(entity.getUUID());
-    }
-
     public static void unmarkRequested(UUID uuid) {
         REQUESTED_IDS.remove(uuid);
     }
 
-    public static boolean isRequested(Entity entity) {
-        return REQUESTED_IDS.contains(entity.getUUID());
+    public void clear() {
+        cache.clear();
+        saveWithDebounce();
+        clearRequestedIds();
     }
 
     public static void clearRequestedIds() {
         REQUESTED_IDS.clear();
     }
 
-    public MerchantOfferInfo get(UUID uuid) {
-        return cache.get(uuid);
-    }
-
-    public MerchantOfferInfo get(int id) {
-        return cache.values().stream().filter(info -> info.hasId(id)).findFirst().orElse(null);
-    }
-
-    public boolean set(UUID uuid, MerchantOfferInfo info) {
-        boolean contains = cache.containsKey(uuid);
-        cache.put(uuid, info);
-        save();
-        return contains;
-    }
-
-    public void remove(UUID uuid) {
-        cache.remove(uuid);
-        save();
-        unmarkRequested(uuid);
-    }
-
-    public boolean removeIfExist(UUID uuid) {
-        if (contains(uuid)) {
-            remove(uuid);
-            return true;
-        }
-        return false;
-    }
-
-    public void clear() {
-        cache.clear();
-        save();
-        clearRequestedIds();
-    }
-
-    public boolean contains(UUID uuid) {
-        return cache.containsKey(uuid);
-    }
-
     public void update(UUID uuid, MerchantOfferInfo info) {
         MerchantOfferInfo oldInfo = get(uuid);
         if (oldInfo != null) {
             oldInfo.update(info);
-            save();
+            saveWithDebounce();
         } else {
             set(uuid, info);
         }
     }
 
-    public void save() {
-        if (!ModConfig.getCache().enabled) return;
-        String name = getCurrentWorldName();
-        if (name == null) {
-            LOGGER.warning("Failed to get current world name");
-            return;
-        }
-        CompoundTag uuids = new CompoundTag();
-        cache.forEach((uuid, info) -> {
-            ListTag offers = new ListTag();
-            for (MerchantOffer offer : info.getOffers()) {
-                offers.add(offer.createTag());
-            }
-            uuids.put(uuid.toString(), offers);
-        });
-        CompoundTag root = new CompoundTag();
-        root.put(name, uuids);
+    public void load() {
         try {
+            if (!ModConfig.getCache().enabled) return;
+            LOGGER.info("Loading cache");
+            String name = getCurrentWorldName();
+            if (name == null) return;
+
+            CompoundTag root;
             File file = getCacheFile();
-            if (!file.exists() && !file.createNewFile()) {
-                LOGGER.warning("Failed to create cache file");
+            if (!file.exists()) {
+                LOGGER.warning("No cache file exist");
                 return;
             }
-            CompoundTag oldCache;
             try {
-                oldCache = NbtIo.readCompressed(file);
-                oldCache.remove(name);
+                root = NbtIo.readCompressed(file);
             } catch (IOException e) {
-                oldCache = new CompoundTag();
+                LOGGER.log(Level.SEVERE, "Failed to read cache file", e);
+                return;
             }
-            oldCache.merge(root);
-            NbtIo.writeCompressed(oldCache, file);
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to save cache", e);
+            if (!root.contains(name)) {
+                LOGGER.info("No cache for current world");
+                return;
+            }
+
+            int count = 0;
+
+            CompoundTag uuids = root.getCompound(name);
+            for (String key : uuids.getAllKeys()) {
+                ListTag offers = uuids.getList(key, 10);
+                List<MerchantOffer> list = offers.stream().map(tag -> new MerchantOffer((CompoundTag) tag)).collect(Collectors.toList());
+                MerchantOfferInfo info = new MerchantOfferInfo(list);
+                UUID uuid;
+                try {
+                    uuid = UUID.fromString(key);
+                } catch (IllegalArgumentException e) {
+                    LOGGER.log(Level.SEVERE, "Failed to parse UUID", e);
+                    continue;
+                }
+                cache.put(uuid, info);
+                count++;
+            }
+
+            errorCount = 0;
+            LOGGER.info("Loaded " + count + " offers from cache");
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error while loading cache, stopping loading. If this error persist, please try to delete cache file " + getCacheFile() + " and report this issue", e);
+            handleError();
         }
     }
 
-    public void load() {
-        if (!ModConfig.getCache().enabled) return;
-        LOGGER.info("Loading cache");
-        String name = getCurrentWorldName();
-        if (name == null) {
-            LOGGER.warning("Failed to get current world name");
-            return;
-        }
-        CompoundTag root;
-        File file = getCacheFile();
-        if (!file.exists()) {
-            LOGGER.warning("No cache file exist");
-            return;
-        }
-        try {
-            root = NbtIo.readCompressed(file);
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to read cache file", e);
-            return;
-        }
-        if (!root.contains(name)) {
-            LOGGER.severe("No cache for current world");
-            return;
-        }
-        CompoundTag uuids = root.getCompound(name);
-        uuids.getAllKeys().forEach(key -> {
-            ListTag offers = uuids.getList(key, 10);
-            List<MerchantOffer> list = offers.stream().map(tag -> new MerchantOffer((CompoundTag) tag)).collect(Collectors.toList());
-            MerchantOfferInfo info = new MerchantOfferInfo(list);
-            cache.put(UUID.fromString(key), info);
-        });
-        LOGGER.info("Cache loaded");
+    public static void markRequested(Entity entity) {
+        REQUESTED_IDS.add(entity.getUUID());
+    }
+
+    public static boolean isRequested(Entity entity) {
+        return REQUESTED_IDS.contains(entity.getUUID());
     }
 }
